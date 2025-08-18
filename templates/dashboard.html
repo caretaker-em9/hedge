@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-running { background-color: #28a745; }
+        .status-stopped { background-color: #dc3545; }
+        .profit { color: #28a745; }
+        .loss { color: #dc3545; }
+        .card-header { background-color: #f8f9fa; }
+        .refresh-btn { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 1000; 
+        }
+        .chart-container {
+            margin-bottom: 30px;
+        }
+        .trade-row { cursor: pointer; }
+        .trade-row:hover { background-color: #f8f9fa; }
+        .symbol-item:hover { 
+            background-color: #f8f9fa; 
+            border-radius: 4px;
+        }
+        .symbol-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #mainChart {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Trading Bot Dashboard</span>
+            <div class="d-flex">
+                <button id="startBot" class="btn btn-success me-2">Start Bot</button>
+                <button id="stopBot" class="btn btn-danger me-2">Stop Bot</button>
+                <button id="refreshData" class="btn btn-outline-light">Refresh</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Status and Portfolio Summary -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Bot Status & Portfolio Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <span id="statusIndicator" class="status-indicator status-stopped"></span>
+                                    <span id="botStatus" class="fw-bold">Stopped</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted">Current Balance</small>
+                                <div id="currentBalance" class="h4">$0.00</div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted">Total P&L</small>
+                                <div id="totalPnl" class="h4">$0.00</div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted">Open Trades</small>
+                                <div id="openTrades" class="h4">0 / 5</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Charts</h5>
+                        <div class="d-flex gap-2">
+                            <select id="chartType" class="form-select" style="width: auto;">
+                                <option value="candlestick">Candlestick + Volume</option>
+                                <option value="indicators">Technical Indicators</option>
+                            </select>
+                            <select id="symbolSelect" class="form-select" style="width: auto;">
+                                <option value="">Select Symbol</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- P&L Chart -->
+                        <div class="chart-container">
+                            <div id="pnlChart"></div>
+                        </div>
+                        
+                        <!-- Main Chart Container -->
+                        <div class="chart-container">
+                            <div id="mainChart" style="min-height: 600px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Active Symbols</h5>
+                        <button id="refreshSymbols" class="btn btn-sm btn-outline-primary">Refresh</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <small class="text-muted">Total Symbols: </small>
+                            <span id="totalSymbols" class="fw-bold">-</span>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted">Last Updated: </small>
+                            <span id="lastUpdated" class="small">-</span>
+                        </div>
+                        <div class="symbol-list" style="max-height: 400px; overflow-y: auto;">
+                            <div id="symbolsList">
+                                <div class="text-center text-muted p-3">
+                                    <small>Loading symbols...</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trades Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Trade History</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="tradesTable" class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Symbol</th>
+                                        <th>Side</th>
+                                        <th>Amount</th>
+                                        <th>Entry Price</th>
+                                        <th>Exit Price</th>
+                                        <th>P&L</th>
+                                        <th>P&L %</th>
+                                        <th>Status</th>
+                                        <th>Signal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TradingDashboard {
+            constructor() {
+                this.isRefreshing = false;
+                this.refreshInterval = null;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadInitialData();
+                this.startAutoRefresh();
+            }
+
+            bindEvents() {
+                $('#startBot').on('click', () => this.startBot());
+                $('#stopBot').on('click', () => this.stopBot());
+                $('#refreshData').on('click', () => this.refreshData());
+                $('#refreshSymbols').on('click', () => this.refreshSymbols());
+                $('#symbolSelect').on('change', (e) => this.loadChart(e.target.value));
+                $('#chartType').on('change', (e) => this.updateChartDisplay());
+            }
+
+            async startBot() {
+                try {
+                    const response = await fetch('/api/bot/start', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showAlert('Bot started successfully', 'success');
+                        this.refreshData();
+                    } else {
+                        this.showAlert(data.message, 'danger');
+                    }
+                } catch (error) {
+                    this.showAlert('Error starting bot', 'danger');
+                }
+            }
+
+            async stopBot() {
+                try {
+                    const response = await fetch('/api/bot/stop', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showAlert('Bot stopped successfully', 'warning');
+                        this.refreshData();
+                    } else {
+                        this.showAlert(data.message, 'danger');
+                    }
+                } catch (error) {
+                    this.showAlert('Error stopping bot', 'danger');
+                }
+            }
+
+            async loadInitialData() {
+                await this.loadSymbols();
+                await this.loadSymbolStats();
+                await this.refreshData();
+                await this.loadPnlChart();
+            }
+
+            async loadSymbols() {
+                try {
+                    const response = await fetch('/api/symbols');
+                    const symbols = await response.json();
+                    
+                    const select = $('#symbolSelect');
+                    select.empty();
+                    select.append('<option value="">Select Symbol</option>');
+                    
+                    symbols.forEach(symbol => {
+                        select.append(`<option value="${symbol}">${symbol}</option>`);
+                    });
+                } catch (error) {
+                    console.error('Error loading symbols:', error);
+                }
+            }
+
+            async loadSymbolStats() {
+                try {
+                    const response = await fetch('/api/symbol_stats');
+                    const stats = await response.json();
+                    
+                    if (stats.error) {
+                        console.error('Error loading symbol stats:', stats.error);
+                        return;
+                    }
+                    
+                    // Update UI
+                    $('#totalSymbols').text(stats.total_symbols || '-');
+                    $('#lastUpdated').text(stats.last_update ? new Date(stats.last_update).toLocaleTimeString() : '-');
+                    
+                    // Update symbols list
+                    const symbolsList = $('#symbolsList');
+                    symbolsList.empty();
+                    
+                    if (stats.top_symbols && stats.top_symbols.length > 0) {
+                        stats.top_symbols.forEach(item => {
+                            const changeClass = item.change > 0 ? 'text-success' : item.change < 0 ? 'text-danger' : '';
+                            const changeIcon = item.change > 0 ? '↗' : item.change < 0 ? '↘' : '→';
+                            
+                            const symbolItem = `
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom symbol-item" 
+                                     data-symbol="${item.symbol}" style="cursor: pointer;">
+                                    <div>
+                                        <div class="fw-bold">${item.symbol}</div>
+                                        <small class="text-muted">Vol: $${(item.volume / 1000000).toFixed(1)}M</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div>$${item.price.toFixed(4)}</div>
+                                        <small class="${changeClass}">${changeIcon} ${item.change.toFixed(2)}%</small>
+                                    </div>
+                                </div>
+                            `;
+                            symbolsList.append(symbolItem);
+                        });
+                        
+                        // Add click handlers for symbol items
+                        $('.symbol-item').on('click', (e) => {
+                            const symbol = $(e.currentTarget).data('symbol');
+                            $('#symbolSelect').val(symbol);
+                            this.loadChart(symbol);
+                        });
+                    } else if (stats.active_symbols) {
+                        // Fallback to simple list
+                        stats.active_symbols.forEach(symbol => {
+                            const symbolItem = `
+                                <div class="py-2 border-bottom symbol-item" data-symbol="${symbol}" style="cursor: pointer;">
+                                    <div class="fw-bold">${symbol}</div>
+                                </div>
+                            `;
+                            symbolsList.append(symbolItem);
+                        });
+                        
+                        $('.symbol-item').on('click', (e) => {
+                            const symbol = $(e.currentTarget).data('symbol');
+                            $('#symbolSelect').val(symbol);
+                            this.loadChart(symbol);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading symbol stats:', error);
+                }
+            }
+
+            async refreshSymbols() {
+                try {
+                    const response = await fetch('/api/refresh_symbols', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showAlert(data.message, 'success');
+                        await this.loadSymbols();
+                        await this.loadSymbolStats();
+                    } else {
+                        this.showAlert(data.message, 'danger');
+                    }
+                } catch (error) {
+                    this.showAlert('Error refreshing symbols', 'danger');
+                }
+            }
+
+            async refreshData() {
+                if (this.isRefreshing) return;
+                this.isRefreshing = true;
+
+                try {
+                    // First refresh the bot data
+                    await fetch('/api/refresh_data', { method: 'POST' });
+                    
+                    await Promise.all([
+                        this.loadBotStatus(),
+                        this.loadTrades(),
+                        this.loadPnlChart()
+                    ]);
+                    
+                    // Reload current chart if a symbol is selected
+                    const selectedSymbol = $('#symbolSelect').val();
+                    if (selectedSymbol) {
+                        await this.loadChart(selectedSymbol);
+                    }
+                } catch (error) {
+                    console.error('Error refreshing data:', error);
+                } finally {
+                    this.isRefreshing = false;
+                }
+            }
+
+            async loadBotStatus() {
+                try {
+                    const response = await fetch('/api/bot/status');
+                    const data = await response.json();
+                    
+                    // Update status indicator
+                    const indicator = $('#statusIndicator');
+                    const statusText = $('#botStatus');
+                    
+                    if (data.status === 'running') {
+                        indicator.removeClass('status-stopped').addClass('status-running');
+                        statusText.text('Running');
+                    } else {
+                        indicator.removeClass('status-running').addClass('status-stopped');
+                        statusText.text('Stopped');
+                    }
+                    
+                    // Update portfolio info
+                    if (data.portfolio) {
+                        $('#currentBalance').text(`$${data.portfolio.current_balance.toFixed(2)}`);
+                        
+                        const totalPnl = data.portfolio.total_pnl || 0;
+                        const pnlElement = $('#totalPnl');
+                        pnlElement.text(`$${totalPnl.toFixed(2)}`);
+                        pnlElement.removeClass('profit loss');
+                        if (totalPnl > 0) pnlElement.addClass('profit');
+                        else if (totalPnl < 0) pnlElement.addClass('loss');
+                        
+                        $('#openTrades').text(`${data.portfolio.open_trades} / 5`);
+                    }
+                } catch (error) {
+                    console.error('Error loading bot status:', error);
+                }
+            }
+
+            async loadTrades() {
+                try {
+                    const response = await fetch('/api/trades');
+                    const trades = await response.json();
+                    
+                    const tbody = $('#tradesTable tbody');
+                    tbody.empty();
+                    
+                    trades.reverse().forEach(trade => {
+                        const row = this.createTradeRow(trade);
+                        tbody.append(row);
+                    });
+                } catch (error) {
+                    console.error('Error loading trades:', error);
+                }
+            }
+
+            createTradeRow(trade) {
+                const entryTime = new Date(trade.timestamp).toLocaleString();
+                const exitTime = trade.exit_timestamp ? new Date(trade.exit_timestamp).toLocaleString() : '-';
+                const exitPrice = trade.exit_price ? trade.exit_price.toFixed(4) : '-';
+                const pnl = trade.pnl ? trade.pnl.toFixed(2) : '-';
+                const pnlPct = trade.pnl_percentage ? trade.pnl_percentage.toFixed(2) + '%' : '-';
+                
+                const pnlClass = trade.pnl > 0 ? 'profit' : trade.pnl < 0 ? 'loss' : '';
+                const statusBadge = trade.status === 'open' ? 
+                    '<span class="badge bg-primary">Open</span>' : 
+                    '<span class="badge bg-secondary">Closed</span>';
+
+                return `
+                    <tr class="trade-row">
+                        <td>${entryTime}</td>
+                        <td>${trade.symbol}</td>
+                        <td><span class="badge bg-${trade.side === 'buy' ? 'success' : 'danger'}">${trade.side.toUpperCase()}</span></td>
+                        <td>${trade.amount.toFixed(6)}</td>
+                        <td>$${trade.price.toFixed(4)}</td>
+                        <td>${exitPrice === '-' ? '-' : '$' + exitPrice}</td>
+                        <td class="${pnlClass}">${pnl === '-' ? '-' : '$' + pnl}</td>
+                        <td class="${pnlClass}">${pnlPct}</td>
+                        <td>${statusBadge}</td>
+                        <td><small>${trade.entry_signal}</small></td>
+                    </tr>
+                `;
+            }
+
+            async loadChart(symbol) {
+                if (!symbol) {
+                    $('#mainChart').empty();
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/chart/${encodeURIComponent(symbol)}`);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        this.showAlert(data.error, 'warning');
+                        return;
+                    }
+                    
+                    // Store chart data for switching between views
+                    this.currentChartData = data;
+                    this.updateChartDisplay();
+                    
+                } catch (error) {
+                    console.error('Error loading chart:', error);
+                    this.showAlert('Error loading chart data', 'danger');
+                }
+            }
+
+            updateChartDisplay() {
+                if (!this.currentChartData) return;
+                
+                const chartType = $('#chartType').val();
+                const data = this.currentChartData;
+                
+                if (chartType === 'candlestick' && data.price_chart) {
+                    const priceChart = JSON.parse(data.price_chart);
+                    Plotly.newPlot('mainChart', priceChart.data, priceChart.layout, {responsive: true});
+                } else if (chartType === 'indicators' && data.indicator_chart) {
+                    const indicatorChart = JSON.parse(data.indicator_chart);
+                    Plotly.newPlot('mainChart', indicatorChart.data, indicatorChart.layout, {responsive: true});
+                }
+            }
+
+            async loadPnlChart() {
+                try {
+                    const response = await fetch('/api/chart/pnl');
+                    const data = await response.json();
+                    
+                    if (data.pnl_chart) {
+                        const pnlChart = JSON.parse(data.pnl_chart);
+                        if (pnlChart.data && pnlChart.data.length > 0) {
+                            Plotly.newPlot('pnlChart', pnlChart.data, pnlChart.layout);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading P&L chart:', error);
+                }
+            }
+
+            startAutoRefresh() {
+                this.refreshInterval = setInterval(() => {
+                    this.refreshData();
+                }, 30000); // Refresh every 30 seconds
+            }
+
+            stopAutoRefresh() {
+                if (this.refreshInterval) {
+                    clearInterval(this.refreshInterval);
+                }
+            }
+
+            showAlert(message, type) {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                // Remove existing alerts
+                $('.alert').remove();
+                
+                // Add new alert at the top
+                $('body').prepend(alertHtml);
+                
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    $('.alert').fadeOut();
+                }, 5000);
+            }
+        }
+
+        // Initialize dashboard when page loads
+        $(document).ready(() => {
+            new TradingDashboard();
+        });
+    </script>
+</body>
+</html>
