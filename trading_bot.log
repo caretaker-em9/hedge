@@ -1,0 +1,723 @@
+2025-08-18 18:19:37,561 - INFO - Starting Trading Bot Application...
+2025-08-18 18:19:37,561 - WARNING - Using default API keys - bot will run in demo mode
+2025-08-18 18:19:37,562 - WARNING - Please update config.py with your Binance Testnet API keys for live trading
+2025-08-18 18:19:39,733 - ERROR - Failed to initialize exchange: binance {"code":-2014,"msg":"API-key format invalid."}
+2025-08-18 18:19:39,733 - INFO - Using mock exchange for demonstration
+2025-08-18 18:19:39,749 - INFO - Configuration loaded successfully
+2025-08-18 18:19:39,749 - INFO - Initial Balance: $100.0
+2025-08-18 18:19:39,749 - INFO - Max Trades: 5
+2025-08-18 18:19:39,749 - INFO - Trading Symbols: BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT
+2025-08-18 18:19:39,749 - INFO - Starting web interface on http://localhost:5000
+2025-08-18 18:19:39,749 - INFO - You can access the dashboard in your browser
+2025-08-18 18:19:39,749 - INFO - Use the web interface to start/stop the trading bot
+2025-08-18 18:19:49,765 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.20.9:5000
+2025-08-18 18:19:49,766 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-18 18:20:11,424 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:11] "GET / HTTP/1.1" 200 -
+2025-08-18 18:20:12,236 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:12] "GET /api/symbols HTTP/1.1" 200 -
+2025-08-18 18:20:12,237 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:12] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-08-18 18:20:12,242 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:12] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:20:12,242 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:12] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:20:12,243 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:12] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:20:12,247 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:12] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:20:17,971 - INFO - Starting trading bot...
+2025-08-18 18:20:17,972 - INFO - Running strategy analysis...
+2025-08-18 18:20:17,972 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:17] "POST /api/bot/start HTTP/1.1" 200 -
+2025-08-18 18:20:18,005 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:18] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:20:18,020 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:18] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:20:18,025 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:18] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:20:18,389 - INFO - Signal detected: ADA/USDT - sell
+2025-08-18 18:20:31,996 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:31] "[33mGET /api/chart/SOL/USDT HTTP/1.1[0m" 404 -
+2025-08-18 18:20:34,582 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:34] "[33mGET /api/chart/BTC/USDT HTTP/1.1[0m" 404 -
+2025-08-18 18:20:42,251 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:42] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:20:42,253 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:42] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:20:42,255 - INFO - 127.0.0.1 - - [18/Aug/2025 18:20:42] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:21:12,241 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:12] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:21:12,243 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:12] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:21:12,245 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:12] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:21:18,428 - INFO - Running strategy analysis...
+2025-08-18 18:21:18,842 - INFO - Signal detected: SOL/USDT - sell
+2025-08-18 18:21:40,666 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:40] "[33mGET /api/chart/SOL/USDT HTTP/1.1[0m" 404 -
+2025-08-18 18:21:42,240 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:42] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:21:42,242 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:42] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:21:42,244 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:42] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:21:44,535 - INFO - Stopping trading bot...
+2025-08-18 18:21:44,536 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:44] "POST /api/bot/stop HTTP/1.1" 200 -
+2025-08-18 18:21:44,556 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:44] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:21:44,558 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:44] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:21:44,560 - INFO - 127.0.0.1 - - [18/Aug/2025 18:21:44] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:22:01,093 - INFO - Application stopped
+2025-08-18 18:30:28,206 - INFO - Starting Trading Bot Application...
+2025-08-18 18:30:30,466 - INFO - Successfully connected to Binance Testnet
+2025-08-18 18:30:30,467 - INFO - Configuration loaded successfully
+2025-08-18 18:30:30,467 - INFO - Initial Balance: $100.0
+2025-08-18 18:30:30,467 - INFO - Max Trades: 5
+2025-08-18 18:30:30,467 - INFO - Trading Symbols: BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT
+2025-08-18 18:30:30,467 - INFO - Starting web interface on http://localhost:5000
+2025-08-18 18:30:30,468 - INFO - You can access the dashboard in your browser
+2025-08-18 18:30:30,468 - INFO - Use the web interface to start/stop the trading bot
+2025-08-18 18:30:40,485 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.20.9:5000
+2025-08-18 18:30:40,485 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-18 18:30:52,876 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:52] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:30:52,881 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:52] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:30:52,886 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:52] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:30:54,987 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:54] "GET / HTTP/1.1" 200 -
+2025-08-18 18:30:55,327 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:55] "GET /api/symbols HTTP/1.1" 200 -
+2025-08-18 18:30:55,331 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:55] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:30:55,332 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:55] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:30:55,333 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:55] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:30:55,336 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:55] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:30:57,761 - INFO - Starting trading bot...
+2025-08-18 18:30:57,762 - INFO - Running strategy analysis...
+2025-08-18 18:30:57,765 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:57] "POST /api/bot/start HTTP/1.1" 200 -
+2025-08-18 18:30:57,780 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:57] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:30:57,783 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:57] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:30:57,786 - INFO - 127.0.0.1 - - [18/Aug/2025 18:30:57] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:31:01,789 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:01] "[33mGET /api/chart/BTC/USDT HTTP/1.1[0m" 404 -
+2025-08-18 18:31:25,328 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:25] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:31:25,328 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:25] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:31:25,329 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:25] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:31:27,384 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:27] "[33mGET /api/chart/BNB/USDT HTTP/1.1[0m" 404 -
+2025-08-18 18:31:46,070 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:46] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+2025-08-18 18:31:51,854 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:51] "[33mGET /api/chart/BTC/USDT HTTP/1.1[0m" 404 -
+2025-08-18 18:31:55,335 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:55] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:31:55,337 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:55] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:31:55,340 - INFO - 127.0.0.1 - - [18/Aug/2025 18:31:55] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:31:59,375 - INFO - Running strategy analysis...
+2025-08-18 18:32:25,328 - INFO - 127.0.0.1 - - [18/Aug/2025 18:32:25] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:32:25,329 - INFO - 127.0.0.1 - - [18/Aug/2025 18:32:25] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:32:25,329 - INFO - 127.0.0.1 - - [18/Aug/2025 18:32:25] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:32:55,334 - INFO - 127.0.0.1 - - [18/Aug/2025 18:32:55] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:32:55,336 - INFO - 127.0.0.1 - - [18/Aug/2025 18:32:55] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:32:55,339 - INFO - 127.0.0.1 - - [18/Aug/2025 18:32:55] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:33:01,315 - INFO - Running strategy analysis...
+2025-08-18 18:33:25,335 - INFO - 127.0.0.1 - - [18/Aug/2025 18:33:25] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:33:25,337 - INFO - 127.0.0.1 - - [18/Aug/2025 18:33:25] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:33:25,338 - INFO - 127.0.0.1 - - [18/Aug/2025 18:33:25] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:33:55,335 - INFO - 127.0.0.1 - - [18/Aug/2025 18:33:55] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:33:55,337 - INFO - 127.0.0.1 - - [18/Aug/2025 18:33:55] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:33:55,340 - INFO - 127.0.0.1 - - [18/Aug/2025 18:33:55] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:34:03,659 - INFO - Running strategy analysis...
+2025-08-18 18:34:07,609 - INFO - Stopping trading bot...
+2025-08-18 18:34:07,609 - INFO - Application stopped
+2025-08-18 18:36:45,289 - INFO - Starting Trading Bot Application...
+2025-08-18 18:36:47,559 - INFO - Successfully connected to Binance Testnet
+2025-08-18 18:36:47,559 - INFO - Configuration loaded successfully
+2025-08-18 18:36:47,559 - INFO - Initial Balance: $100.0
+2025-08-18 18:36:47,559 - INFO - Max Trades: 5
+2025-08-18 18:36:47,559 - INFO - Trading Symbols: BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT
+2025-08-18 18:36:47,559 - INFO - Starting web interface on http://localhost:5000
+2025-08-18 18:36:47,559 - INFO - You can access the dashboard in your browser
+2025-08-18 18:36:47,559 - INFO - Use the web interface to start/stop the trading bot
+2025-08-18 18:36:57,575 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.20.9:5000
+2025-08-18 18:36:57,575 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-18 18:36:58,548 - INFO - 127.0.0.1 - - [18/Aug/2025 18:36:58] "GET / HTTP/1.1" 200 -
+2025-08-18 18:36:59,044 - INFO - 127.0.0.1 - - [18/Aug/2025 18:36:59] "GET /api/symbols HTTP/1.1" 200 -
+2025-08-18 18:37:00,949 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:00] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:37:00,961 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:00] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:37:00,964 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:00] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:37:00,966 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:00] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:37:00,984 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:00] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:37:12,327 - INFO - Starting trading bot...
+2025-08-18 18:37:12,328 - INFO - Running strategy analysis...
+2025-08-18 18:37:12,331 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:12] "POST /api/bot/start HTTP/1.1" 200 -
+2025-08-18 18:37:14,893 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:14] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:37:14,903 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:14] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:37:14,907 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:14] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:37:14,917 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:14] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:37:15,224 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:15] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:37:15,291 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:15] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:37:26,284 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:26] "GET /api/chart/SOL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:37:31,041 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:31] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:37:31,053 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:31] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:37:31,055 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:31] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:37:31,056 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:31] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:37:31,304 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:31] "GET /api/chart/SOL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:37:34,836 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:34] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:37:38,589 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:38] "GET /api/chart/BNB%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:37:48,729 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:48] "GET /api/chart/ADA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:37:51,542 - INFO - 127.0.0.1 - - [18/Aug/2025 18:37:51] "GET /api/chart/SOL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:38:01,064 - INFO - 127.0.0.1 - - [18/Aug/2025 18:38:01] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:38:01,075 - INFO - 127.0.0.1 - - [18/Aug/2025 18:38:01] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:38:01,077 - INFO - 127.0.0.1 - - [18/Aug/2025 18:38:01] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:38:01,079 - INFO - 127.0.0.1 - - [18/Aug/2025 18:38:01] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:38:01,314 - INFO - 127.0.0.1 - - [18/Aug/2025 18:38:01] "GET /api/chart/SOL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:38:14,689 - INFO - Running strategy analysis...
+2025-08-18 18:38:24,883 - INFO - Stopping trading bot...
+2025-08-18 18:38:24,883 - INFO - Application stopped
+2025-08-18 18:47:31,194 - INFO - Successfully connected to Binance Testnet
+2025-08-18 18:47:33,625 - INFO - Found 100 top volume USDT pairs
+2025-08-18 18:47:35,630 - INFO - Updated symbol list: 100 symbols with volume >= $1,000,000
+2025-08-18 18:48:44,489 - INFO - Starting Trading Bot Application...
+2025-08-18 18:48:46,972 - INFO - Successfully connected to Binance Testnet
+2025-08-18 18:48:46,973 - INFO - Configuration loaded successfully
+2025-08-18 18:48:46,973 - INFO - Initial Balance: $100.0
+2025-08-18 18:48:46,973 - INFO - Max Trades: 5
+2025-08-18 18:48:46,974 - INFO - Trading Symbols: BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT, XRP/USDT, DOGE/USDT, DOT/USDT, AVAX/USDT, LUNA/USDT, LINK/USDT, UNI/USDT, LTC/USDT, BCH/USDT, MATIC/USDT, ALGO/USDT, VET/USDT, ATOM/USDT, ICP/USDT, THETA/USDT, FIL/USDT, TRX/USDT, ETC/USDT, XLM/USDT, MANA/USDT, SAND/USDT, CRO/USDT, NEAR/USDT, GALA/USDT, SHIB/USDT, FTM/USDT, ONE/USDT, HBAR/USDT, CAKE/USDT, KSM/USDT, WAVES/USDT, ENJ/USDT, BAT/USDT, ZIL/USDT, QTUM/USDT, ICX/USDT, ZEC/USDT, DASH/USDT, NEO/USDT, IOTA/USDT, XTZ/USDT, EOS/USDT, OMG/USDT
+2025-08-18 18:48:46,974 - INFO - Starting web interface on http://localhost:5000
+2025-08-18 18:48:46,974 - INFO - You can access the dashboard in your browser
+2025-08-18 18:48:46,975 - INFO - Use the web interface to start/stop the trading bot
+2025-08-18 18:48:47,214 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.20.9:5000
+2025-08-18 18:48:47,214 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-18 18:49:05,027 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 18:49:06,606 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 18:49:08,213 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 18:49:08,455 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:08] "GET / HTTP/1.1" 200 -
+2025-08-18 18:49:08,768 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:08] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:49:08,842 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:08] "GET /api/symbols HTTP/1.1" 200 -
+2025-08-18 18:49:10,599 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:10] "GET /api/symbol_stats HTTP/1.1" 200 -
+2025-08-18 18:49:12,902 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:12] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:13,889 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 18:49:15,286 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:15] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:15,403 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 18:49:16,308 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 18:49:16,520 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:16] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:49:16,530 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:16] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:49:16,533 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:16] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:49:16,535 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:16] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:49:16,801 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:16] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:16,846 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:16] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:49:20,336 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:20] "GET /api/chart/BNB%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:22,086 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:22] "GET /api/chart/ADA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:23,406 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:23] "GET /api/chart/ADA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:24,718 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:24] "GET /api/chart/ADA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:25,749 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:25] "GET /api/chart/SOL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:28,190 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:28] "GET /api/chart/XRP%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:29,785 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:29] "GET /api/chart/DOGE%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:33,040 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:33] "GET /api/chart/DOT%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:35,342 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:35] "GET /api/chart/AVAX%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:37,017 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 18:49:37,018 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:37] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:40,732 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 18:49:40,732 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:40] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:41,325 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 18:49:41,707 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 18:49:41,707 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:41] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:42,793 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 18:49:43,687 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 18:49:43,858 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:43] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:49:43,862 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:43] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:49:43,863 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:43] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:49:43,864 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:43] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:49:43,869 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 18:49:43,869 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:43] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:45,753 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 18:49:45,754 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:45] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:47,104 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 18:49:47,105 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:47] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:47,284 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 18:49:47,285 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:47] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:48,302 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 18:49:48,303 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:48] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:52,639 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:52] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:56,761 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:56] "GET /api/chart/UNI%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:49:59,533 - INFO - 127.0.0.1 - - [18/Aug/2025 18:49:59] "GET /api/chart/LTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:01,524 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:01] "GET /api/chart/BCH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:05,142 - ERROR - Error creating charts for MATIC/USDT: 'dataframe'
+2025-08-18 18:50:05,142 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:05] "GET /api/chart/MATIC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:09,462 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:09] "GET /api/chart/ALGO%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:11,659 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 18:50:12,522 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 18:50:13,539 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 18:50:13,794 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:13] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:50:13,842 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:13] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:50:13,854 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:13] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:50:13,861 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:13] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:50:13,960 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:13] "GET /api/chart/VET%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:14,153 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:14] "GET /api/chart/VET%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:15,978 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:15] "GET /api/chart/ATOM%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:20,224 - INFO - Starting trading bot...
+2025-08-18 18:50:20,224 - INFO - Updating symbol list based on volume...
+2025-08-18 18:50:20,897 - INFO - Found 100 top volume USDT pairs
+2025-08-18 18:50:22,888 - INFO - Updated symbol list: 100 symbols with volume >= $1,000,000
+2025-08-18 18:50:22,889 - INFO - Trading 100 symbols: SOL/USDT:USDT, LINK/USDT:USDT, ETH/USDT:USDT, BCH/USDT:USDT, BTC/USDT:USDT, XRP/USDT:USDT, SUI/USDT:USDT, ADA/USDT:USDT, BNB/USDT:USDT, XLM/USDT:USDT...
+2025-08-18 18:50:22,890 - INFO - Running strategy analysis...
+2025-08-18 18:50:22,891 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:22] "POST /api/bot/start HTTP/1.1" 200 -
+2025-08-18 18:50:22,891 - INFO - Analyzing batch 1: 10 symbols (0-10)
+2025-08-18 18:50:23,508 - INFO - Signal detected: LINK/USDT:USDT - sell
+2025-08-18 18:50:26,368 - INFO - Batch complete. Signals found: 1
+2025-08-18 18:50:29,221 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:29] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:50:29,247 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:29] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:50:29,250 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:29] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:50:29,253 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:29] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:50:29,486 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:29] "GET /api/chart/ATOM%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:34,959 - ERROR - Error creating charts for ICP/USDT: 'dataframe'
+2025-08-18 18:50:34,960 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:34] "GET /api/chart/ICP%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:38,459 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:38] "GET /api/chart/THETA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:45,065 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:45] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:50:45,068 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:45] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:50:45,069 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:45] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:50:45,069 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:45] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:50:45,139 - INFO - 127.0.0.1 - - [18/Aug/2025 18:50:45] "GET /api/chart/THETA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:50:56,368 - INFO - Running strategy analysis...
+2025-08-18 18:50:56,369 - INFO - Analyzing batch 2: 10 symbols (10-20)
+2025-08-18 18:51:00,635 - INFO - Batch complete. Signals found: 0
+2025-08-18 18:51:17,687 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:17] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:51:17,699 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:17] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:51:17,700 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:17] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:51:17,702 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:17] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:51:17,997 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:17] "GET /api/chart/THETA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:51:30,636 - INFO - Running strategy analysis...
+2025-08-18 18:51:30,636 - INFO - Analyzing batch 3: 10 symbols (20-30)
+2025-08-18 18:51:35,170 - INFO - Batch complete. Signals found: 0
+2025-08-18 18:51:45,830 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:45] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:51:45,833 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:45] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:51:45,834 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:45] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:51:45,834 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:45] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:51:45,998 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:45] "GET /api/chart/THETA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:51:53,454 - INFO - 127.0.0.1 - - [18/Aug/2025 18:51:53] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:52:05,171 - INFO - Running strategy analysis...
+2025-08-18 18:52:05,172 - INFO - Analyzing batch 4: 10 symbols (30-40)
+2025-08-18 18:52:10,067 - INFO - Batch complete. Signals found: 0
+2025-08-18 18:52:17,270 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:17] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:52:17,279 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:17] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:52:17,281 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:17] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:52:17,283 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:17] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:52:17,557 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:17] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:52:40,068 - INFO - Running strategy analysis...
+2025-08-18 18:52:40,068 - INFO - Analyzing batch 5: 10 symbols (40-50)
+2025-08-18 18:52:41,303 - INFO - Signal detected: LQTY/USDT:USDT - sell
+2025-08-18 18:52:44,755 - INFO - Batch complete. Signals found: 1
+2025-08-18 18:52:47,869 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:47] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:52:47,873 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:47] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:52:47,874 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:47] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:52:47,874 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:47] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:52:48,026 - INFO - 127.0.0.1 - - [18/Aug/2025 18:52:48] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:53:14,761 - INFO - Running strategy analysis...
+2025-08-18 18:53:14,762 - INFO - Analyzing batch 6: 10 symbols (50-60)
+2025-08-18 18:53:16,946 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:16] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:53:16,951 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:16] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:53:16,952 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:16] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:53:16,953 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:16] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:53:17,046 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:17] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:53:18,408 - INFO - Batch complete. Signals found: 0
+2025-08-18 18:53:46,831 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:46] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:53:46,835 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:46] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:53:46,836 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:46] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:53:46,836 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:46] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:53:46,921 - INFO - 127.0.0.1 - - [18/Aug/2025 18:53:46] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:53:48,409 - INFO - Running strategy analysis...
+2025-08-18 18:53:48,409 - INFO - Analyzing batch 7: 10 symbols (60-70)
+2025-08-18 18:53:53,112 - INFO - Batch complete. Signals found: 0
+2025-08-18 18:54:16,301 - INFO - 127.0.0.1 - - [18/Aug/2025 18:54:16] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:54:16,305 - INFO - 127.0.0.1 - - [18/Aug/2025 18:54:16] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:54:16,306 - INFO - 127.0.0.1 - - [18/Aug/2025 18:54:16] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:54:16,307 - INFO - 127.0.0.1 - - [18/Aug/2025 18:54:16] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:54:16,380 - INFO - 127.0.0.1 - - [18/Aug/2025 18:54:16] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:54:23,113 - INFO - Running strategy analysis...
+2025-08-18 18:54:23,114 - INFO - Analyzing batch 8: 10 symbols (70-80)
+2025-08-18 18:54:26,311 - INFO - Signal detected: RDNT/USDT:USDT - sell
+2025-08-18 18:54:27,423 - INFO - Batch complete. Signals found: 1
+2025-08-18 18:54:50,333 - ERROR - Error fetching data for BTC/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=BTCUSDT
+2025-08-18 18:54:50,565 - ERROR - Error fetching data for XRP/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=XRPUSDT
+2025-08-18 18:54:50,817 - ERROR - Error fetching data for SUI/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=SUIUSDT
+2025-08-18 18:54:51,097 - ERROR - Error fetching data for ADA/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=ADAUSDT
+2025-08-18 18:54:51,330 - ERROR - Error fetching data for BNB/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=BNBUSDT
+2025-08-18 18:54:51,564 - ERROR - Error fetching data for XLM/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=XLMUSDT
+2025-08-18 18:54:51,800 - ERROR - Error fetching data for ETC/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=ETCUSDT
+2025-08-18 18:54:52,128 - ERROR - Error fetching data for BTC/USDT:USDT-250627: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=BTCUSDT_250627
+2025-08-18 18:54:52,358 - ERROR - Error fetching data for LTC/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=LTCUSDT
+2025-08-18 18:54:52,591 - ERROR - Error fetching data for SKL/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=SKLUSDT
+2025-08-18 18:54:52,854 - ERROR - Error fetching data for TAG/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=TAGUSDT
+2025-08-18 18:54:53,454 - ERROR - Error fetching data for BIO/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=BIOUSDT
+2025-08-18 18:54:57,423 - INFO - Running strategy analysis...
+2025-08-18 18:54:57,424 - INFO - Analyzing batch 9: 10 symbols (80-90)
+2025-08-18 18:54:59,814 - ERROR - Error fetching data for SLP/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=SLPUSDT
+2025-08-18 18:55:01,304 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:01] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:55:05,198 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:05] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:55:05,200 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:05] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:55:05,202 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:05] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:55:05,498 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:05] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:55:07,437 - ERROR - Error fetching data for TRU/USDT:USDT: binance GET https://testnet.binancefuture.com/fapi/v1/klines?interval=5m&limit=200&symbol=TRUUSDT
+2025-08-18 18:55:09,815 - INFO - Signal detected: ONE/USDT:USDT - sell
+2025-08-18 18:55:09,815 - INFO - Batch complete. Signals found: 1
+2025-08-18 18:55:18,056 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:18] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:55:18,066 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:18] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:55:18,068 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:18] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:55:18,071 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:18] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:55:18,349 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:18] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:55:39,873 - INFO - Running strategy analysis...
+2025-08-18 18:55:39,873 - INFO - Analyzing batch 10: 10 symbols (90-100)
+2025-08-18 18:55:44,978 - INFO - Batch complete. Signals found: 0
+2025-08-18 18:55:46,735 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:46] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:55:46,746 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:46] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:55:46,749 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:46] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:55:46,751 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:46] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:55:47,029 - INFO - 127.0.0.1 - - [18/Aug/2025 18:55:47] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:56:14,979 - INFO - Running strategy analysis...
+2025-08-18 18:56:14,979 - INFO - Analyzing batch 11: 10 symbols (0-10)
+2025-08-18 18:56:17,746 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:17] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:56:17,760 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:17] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:56:17,762 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:17] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:56:17,763 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:17] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:56:18,200 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:18] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 18:56:19,818 - INFO - Batch complete. Signals found: 0
+2025-08-18 18:56:19,819 - INFO - Updating symbol list based on current volume...
+2025-08-18 18:56:21,977 - INFO - Found 100 top volume USDT pairs
+2025-08-18 18:56:23,956 - INFO - Updated symbol list: 100 symbols with volume >= $1,000,000
+2025-08-18 18:56:45,933 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:45] "GET / HTTP/1.1" 200 -
+2025-08-18 18:56:46,270 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:46] "GET /api/symbols HTTP/1.1" 200 -
+2025-08-18 18:56:46,949 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:46] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:56:48,713 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:48] "GET /api/symbol_stats HTTP/1.1" 200 -
+2025-08-18 18:56:53,958 - INFO - Running strategy analysis...
+2025-08-18 18:56:53,958 - INFO - Analyzing batch 1: 10 symbols (0-10)
+2025-08-18 18:56:56,037 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:56] "GET /api/chart/SOL%2FUSDT:USDT HTTP/1.1" 200 -
+2025-08-18 18:56:59,582 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:59] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:56:59,592 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:59] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:56:59,594 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:59] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:56:59,596 - INFO - 127.0.0.1 - - [18/Aug/2025 18:56:59] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:57:00,063 - INFO - Batch complete. Signals found: 0
+2025-08-18 18:57:00,115 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:00] "GET /api/chart/SOL%2FUSDT:USDT HTTP/1.1" 200 -
+2025-08-18 18:57:00,298 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:00] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:57:18,264 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:18] "GET /api/chart/SWARMS%2FUSDT:USDT HTTP/1.1" 200 -
+2025-08-18 18:57:24,370 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:24] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 18:57:24,380 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:24] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 18:57:24,382 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:24] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 18:57:24,384 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:24] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 18:57:24,610 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:24] "GET /api/chart/SWARMS%2FUSDT:USDT HTTP/1.1" 200 -
+2025-08-18 18:57:26,830 - INFO - 127.0.0.1 - - [18/Aug/2025 18:57:26] "GET /api/chart/AGLD%2FUSDT:USDT HTTP/1.1" 200 -
+2025-08-18 18:57:30,069 - INFO - Running strategy analysis...
+2025-08-18 18:57:30,069 - INFO - Analyzing batch 2: 10 symbols (10-20)
+2025-08-18 18:57:32,879 - INFO - Stopping trading bot...
+2025-08-18 18:57:32,880 - INFO - Application stopped
+2025-08-18 19:02:42,334 - INFO - Starting Trading Bot Application...
+2025-08-18 19:02:44,639 - INFO - Successfully connected to Binance Testnet
+2025-08-18 19:02:44,640 - INFO - Configuration loaded successfully
+2025-08-18 19:02:44,641 - INFO - Initial Balance: $100.0
+2025-08-18 19:02:44,642 - INFO - Max Trades: 5
+2025-08-18 19:02:44,642 - INFO - Trading Symbols: BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT, XRP/USDT, DOGE/USDT, DOT/USDT, AVAX/USDT, LUNA/USDT, LINK/USDT, UNI/USDT, LTC/USDT, BCH/USDT, MATIC/USDT, ALGO/USDT, VET/USDT, ATOM/USDT, ICP/USDT, THETA/USDT, FIL/USDT, TRX/USDT, ETC/USDT, XLM/USDT, MANA/USDT, SAND/USDT, CRO/USDT, NEAR/USDT, GALA/USDT, SHIB/USDT, FTM/USDT, ONE/USDT, HBAR/USDT, CAKE/USDT, KSM/USDT, WAVES/USDT, ENJ/USDT, BAT/USDT, ZIL/USDT, QTUM/USDT, ICX/USDT, ZEC/USDT, DASH/USDT, NEO/USDT, IOTA/USDT, XTZ/USDT, EOS/USDT, OMG/USDT
+2025-08-18 19:02:44,642 - INFO - Starting web interface on http://localhost:5000
+2025-08-18 19:02:44,642 - INFO - You can access the dashboard in your browser
+2025-08-18 19:02:44,642 - INFO - Use the web interface to start/stop the trading bot
+2025-08-18 19:02:44,703 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.20.9:5000
+2025-08-18 19:02:44,703 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-18 19:02:49,699 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:02:49,728 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:49] "GET / HTTP/1.1" 200 -
+2025-08-18 19:02:50,120 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:50] "GET /api/symbols HTTP/1.1" 200 -
+2025-08-18 19:02:51,494 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:02:52,186 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:52] "GET /api/symbol_stats HTTP/1.1" 200 -
+2025-08-18 19:02:53,482 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:02:53,988 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:53] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:02:55,074 - INFO - Starting trading bot...
+2025-08-18 19:02:55,074 - INFO - Updating symbol list based on volume...
+2025-08-18 19:02:56,237 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:02:57,629 - INFO - Found 100 top volume USDT pairs
+2025-08-18 19:02:58,103 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:02:59,057 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:02:59,400 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:59] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:02:59,416 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:59] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:02:59,419 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:59] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:02:59,421 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:59] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:02:59,449 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:59] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:02:59,868 - INFO - Updated symbol list: 100 symbols with volume >= $1,000,000
+2025-08-18 19:02:59,869 - INFO - Trading 100 symbols: SOL/USDT:USDT, LINK/USDT:USDT, ETH/USDT:USDT, BCH/USDT:USDT, BTC/USDT:USDT, XRP/USDT:USDT, SUI/USDT:USDT, ADA/USDT:USDT, BNB/USDT:USDT, XLM/USDT:USDT...
+2025-08-18 19:02:59,870 - INFO - Running strategy analysis...
+2025-08-18 19:02:59,870 - INFO - Analyzing batch 1: 10 symbols (0-10)
+2025-08-18 19:02:59,871 - INFO - 127.0.0.1 - - [18/Aug/2025 19:02:59] "POST /api/bot/start HTTP/1.1" 200 -
+2025-08-18 19:03:05,042 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:03:08,482 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:08] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:03:08,496 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:08] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:03:08,504 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:08] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:03:08,508 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:08] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:03:08,839 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:08] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:03:08,995 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:08] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:03:29,172 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:29] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:03:29,183 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:29] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:03:29,185 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:29] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:03:29,187 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:29] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:03:29,486 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:29] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:03:35,048 - INFO - Running strategy analysis...
+2025-08-18 19:03:35,048 - INFO - Analyzing batch 2: 10 symbols (10-20)
+2025-08-18 19:03:37,912 - INFO - Signal detected: BIO/USDT:USDT - sell
+2025-08-18 19:03:39,629 - INFO - Batch complete. Signals found: 1
+2025-08-18 19:03:59,749 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:59] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:03:59,760 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:59] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:03:59,763 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:59] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:03:59,764 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:59] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:03:59,988 - INFO - 127.0.0.1 - - [18/Aug/2025 19:03:59] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:04:09,630 - INFO - Running strategy analysis...
+2025-08-18 19:04:09,630 - INFO - Analyzing batch 3: 10 symbols (20-30)
+2025-08-18 19:04:11,898 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:04:25,228 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:25] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:04:25,232 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:25] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:04:25,233 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:25] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:04:25,233 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:25] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:04:25,432 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:25] "GET /api/chart/BTC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:04:41,899 - INFO - Running strategy analysis...
+2025-08-18 19:04:41,899 - INFO - Analyzing batch 4: 10 symbols (30-40)
+2025-08-18 19:04:45,843 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:04:49,420 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:49] "GET /api/chart/XRP%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:04:53,720 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:53] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:04:58,855 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:58] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:04:58,866 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:58] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:04:58,868 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:58] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:04:58,871 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:58] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:04:59,220 - INFO - 127.0.0.1 - - [18/Aug/2025 19:04:59] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:04:59,527 - INFO - Symbol OMG/USDT not in cache, analyzing now...
+2025-08-18 19:05:00,052 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:00] "GET /api/chart/OMG%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:05:03,323 - INFO - Symbol ZIL/USDT not in cache, analyzing now...
+2025-08-18 19:05:03,855 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:03] "GET /api/chart/ZIL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:05:15,844 - INFO - Running strategy analysis...
+2025-08-18 19:05:15,844 - INFO - Analyzing batch 5: 10 symbols (40-50)
+2025-08-18 19:05:19,941 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:05:28,052 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:28] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:05:28,064 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:28] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:05:28,066 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:28] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:05:28,068 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:28] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:05:28,387 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:28] "GET /api/chart/ZIL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:05:49,942 - INFO - Running strategy analysis...
+2025-08-18 19:05:49,942 - INFO - Analyzing batch 6: 10 symbols (50-60)
+2025-08-18 19:05:54,867 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:05:59,478 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:59] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:05:59,489 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:59] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:05:59,491 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:59] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:05:59,494 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:59] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:05:59,776 - INFO - 127.0.0.1 - - [18/Aug/2025 19:05:59] "GET /api/chart/ZIL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:06:07,572 - INFO - Stopping trading bot...
+2025-08-18 19:06:07,572 - INFO - Application stopped
+2025-08-18 19:09:42,812 - INFO - Starting Trading Bot Application...
+2025-08-18 19:09:45,080 - INFO - Successfully connected to Binance Testnet
+2025-08-18 19:09:45,081 - INFO - Configuration loaded successfully
+2025-08-18 19:09:45,082 - INFO - Initial Balance: $100.0
+2025-08-18 19:09:45,082 - INFO - Max Trades: 5
+2025-08-18 19:09:45,082 - INFO - Trading Symbols: BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT, XRP/USDT, DOGE/USDT, DOT/USDT, AVAX/USDT, LUNA/USDT, LINK/USDT, UNI/USDT, LTC/USDT, BCH/USDT, MATIC/USDT, ALGO/USDT, VET/USDT, ATOM/USDT, ICP/USDT, THETA/USDT, FIL/USDT, TRX/USDT, ETC/USDT, XLM/USDT, MANA/USDT, SAND/USDT, CRO/USDT, NEAR/USDT, GALA/USDT, SHIB/USDT, FTM/USDT, ONE/USDT, HBAR/USDT, CAKE/USDT, KSM/USDT, WAVES/USDT, ENJ/USDT, BAT/USDT, ZIL/USDT, QTUM/USDT, ICX/USDT, ZEC/USDT, DASH/USDT, NEO/USDT, IOTA/USDT, XTZ/USDT, EOS/USDT, OMG/USDT
+2025-08-18 19:09:45,083 - INFO - Starting web interface on http://localhost:5000
+2025-08-18 19:09:45,083 - INFO - You can access the dashboard in your browser
+2025-08-18 19:09:45,083 - INFO - Use the web interface to start/stop the trading bot
+2025-08-18 19:09:45,141 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.20.9:5000
+2025-08-18 19:09:45,141 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-18 19:12:34,078 - INFO - Starting Trading Bot Application...
+2025-08-18 19:12:36,340 - INFO - Successfully connected to Binance Testnet
+2025-08-18 19:12:36,340 - INFO - Configuration loaded successfully
+2025-08-18 19:12:36,340 - INFO - Initial Balance: $100.0
+2025-08-18 19:12:36,340 - INFO - Max Trades: 5
+2025-08-18 19:12:36,340 - INFO - Trading Symbols: BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT, XRP/USDT, DOGE/USDT, DOT/USDT, AVAX/USDT, LUNA/USDT, LINK/USDT, UNI/USDT, LTC/USDT, BCH/USDT, MATIC/USDT, ALGO/USDT, VET/USDT, ATOM/USDT, ICP/USDT, THETA/USDT, FIL/USDT, TRX/USDT, ETC/USDT, XLM/USDT, MANA/USDT, SAND/USDT, CRO/USDT, NEAR/USDT, GALA/USDT, SHIB/USDT, FTM/USDT, ONE/USDT, HBAR/USDT, CAKE/USDT, KSM/USDT, WAVES/USDT, ENJ/USDT, BAT/USDT, ZIL/USDT, QTUM/USDT, ICX/USDT, ZEC/USDT, DASH/USDT, NEO/USDT, IOTA/USDT, XTZ/USDT, EOS/USDT, OMG/USDT
+2025-08-18 19:12:36,341 - INFO - Starting web interface on http://localhost:5000
+2025-08-18 19:12:36,341 - INFO - You can access the dashboard in your browser
+2025-08-18 19:12:36,341 - INFO - Use the web interface to start/stop the trading bot
+2025-08-18 19:12:36,393 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.20.9:5000
+2025-08-18 19:12:36,393 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-18 19:12:50,687 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:50] "GET / HTTP/1.1" 200 -
+2025-08-18 19:12:51,078 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:51] "GET /api/symbols HTTP/1.1" 200 -
+2025-08-18 19:12:52,064 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:12:53,043 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:12:53,731 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:53] "GET /api/symbol_stats HTTP/1.1" 200 -
+2025-08-18 19:12:53,875 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:12:54,073 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:54] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:12:56,370 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:12:57,227 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:12:58,309 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:12:58,411 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:58] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:12:58,710 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:58] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:12:58,721 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:58] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:12:58,724 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:58] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:12:58,726 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:58] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:12:59,010 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:59] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:12:59,062 - INFO - 127.0.0.1 - - [18/Aug/2025 19:12:59] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:13:01,464 - INFO - Starting trading bot...
+2025-08-18 19:13:01,464 - INFO - Updating symbol list based on volume...
+2025-08-18 19:13:02,142 - INFO - Found 100 top volume USDT pairs
+2025-08-18 19:13:03,845 - INFO - Updated symbol list: 100 symbols with volume >= $1,000,000
+2025-08-18 19:13:03,847 - INFO - Trading 100 symbols: SOL/USDT:USDT, LINK/USDT:USDT, ETH/USDT:USDT, BCH/USDT:USDT, BTC/USDT:USDT, XRP/USDT:USDT, SUI/USDT:USDT, ADA/USDT:USDT, BNB/USDT:USDT, XLM/USDT:USDT...
+2025-08-18 19:13:03,848 - INFO - Running strategy analysis...
+2025-08-18 19:13:03,848 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:03] "POST /api/bot/start HTTP/1.1" 200 -
+2025-08-18 19:13:03,849 - INFO - Analyzing batch 1: 10 symbols (0-10)
+2025-08-18 19:13:08,488 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:13:11,400 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:11] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:13:11,412 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:11] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:13:11,416 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:11] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:13:11,419 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:11] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:13:11,803 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:11] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:13:26,076 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:26] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:13:26,087 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:26] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:13:26,090 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:26] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:13:26,091 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:26] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:13:26,399 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:26] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:13:38,489 - INFO - Running strategy analysis...
+2025-08-18 19:13:38,489 - INFO - Analyzing batch 2: 10 symbols (10-20)
+2025-08-18 19:13:40,324 - INFO - Signal detected: GALA/USDT:USDT - sell
+2025-08-18 19:13:40,324 - INFO - Batch complete. Signals found: 1
+2025-08-18 19:13:56,239 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:56] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:13:56,249 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:56] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:13:56,252 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:56] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:13:56,254 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:56] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:13:56,618 - INFO - 127.0.0.1 - - [18/Aug/2025 19:13:56] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:14:10,325 - INFO - Running strategy analysis...
+2025-08-18 19:14:10,325 - INFO - Analyzing batch 3: 10 symbols (20-30)
+2025-08-18 19:14:12,975 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:14:16,478 - INFO - Stopping trading bot...
+2025-08-18 19:14:16,479 - INFO - Application stopped
+2025-08-18 19:32:46,892 - INFO - Starting Trading Bot Application...
+2025-08-18 19:32:48,972 - INFO - Successfully connected to Binance Testnet
+2025-08-18 19:32:48,972 - INFO - Configuration loaded successfully
+2025-08-18 19:32:48,972 - INFO - Initial Balance: $100.0
+2025-08-18 19:32:48,973 - INFO - Max Trades: 5
+2025-08-18 19:32:48,973 - INFO - Trading Symbols: BTC/USDT, ETH/USDT, BNB/USDT, ADA/USDT, SOL/USDT, XRP/USDT, DOGE/USDT, DOT/USDT, AVAX/USDT, LUNA/USDT, LINK/USDT, UNI/USDT, LTC/USDT, BCH/USDT, MATIC/USDT, ALGO/USDT, VET/USDT, ATOM/USDT, ICP/USDT, THETA/USDT, FIL/USDT, TRX/USDT, ETC/USDT, XLM/USDT, MANA/USDT, SAND/USDT, CRO/USDT, NEAR/USDT, GALA/USDT, SHIB/USDT, FTM/USDT, ONE/USDT, HBAR/USDT, CAKE/USDT, KSM/USDT, WAVES/USDT, ENJ/USDT, BAT/USDT, ZIL/USDT, QTUM/USDT, ICX/USDT, ZEC/USDT, DASH/USDT, NEO/USDT, IOTA/USDT, XTZ/USDT, EOS/USDT, OMG/USDT
+2025-08-18 19:32:48,973 - INFO - Starting web interface on http://localhost:5000
+2025-08-18 19:32:48,974 - INFO - You can access the dashboard in your browser
+2025-08-18 19:32:48,974 - INFO - Use the web interface to start/stop the trading bot
+2025-08-18 19:32:49,029 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.20.9:5000
+2025-08-18 19:32:49,030 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-18 19:32:52,703 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:32:53,540 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:32:54,220 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:32:54,576 - INFO - 127.0.0.1 - - [18/Aug/2025 19:32:54] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:32:54,588 - INFO - 127.0.0.1 - - [18/Aug/2025 19:32:54] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:32:54,590 - INFO - 127.0.0.1 - - [18/Aug/2025 19:32:54] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:32:54,592 - INFO - 127.0.0.1 - - [18/Aug/2025 19:32:54] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:32:55,065 - INFO - 127.0.0.1 - - [18/Aug/2025 19:32:55] "GET /api/chart/ETH%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:33:20,773 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:20] "GET / HTTP/1.1" 200 -
+2025-08-18 19:33:21,188 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:21] "GET /api/symbols HTTP/1.1" 200 -
+2025-08-18 19:33:21,542 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:21] "GET /api/symbol_stats HTTP/1.1" 200 -
+2025-08-18 19:33:23,379 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:33:24,354 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:33:25,444 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:33:25,603 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:25] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:33:25,614 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:25] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:33:25,616 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:25] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:33:25,618 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:25] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:33:25,640 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:25] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:33:27,073 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:27] "GET /api/chart/SOL%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:33:40,216 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:40] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:33:53,417 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:33:54,057 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:33:54,733 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:33:54,905 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:54] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:33:54,917 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:54] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:33:54,919 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:54] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:33:54,921 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:54] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:33:55,287 - INFO - 127.0.0.1 - - [18/Aug/2025 19:33:55] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:34:24,559 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:34:25,558 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:34:26,242 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:34:26,397 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:26] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:34:26,410 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:26] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:34:26,412 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:26] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:34:26,415 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:26] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:34:26,783 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:26] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:34:53,789 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:34:55,216 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:34:56,293 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:34:56,448 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:56] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:34:56,460 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:56] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:34:56,462 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:56] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:34:56,464 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:56] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:34:56,863 - INFO - 127.0.0.1 - - [18/Aug/2025 19:34:56] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:35:23,615 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:35:24,456 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:35:25,129 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:35:25,468 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:25] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:35:25,472 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:25] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:35:25,473 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:25] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:35:25,473 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:25] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:35:25,615 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:25] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:35:53,427 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:35:54,678 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:35:55,563 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:35:55,919 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:55] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:35:55,930 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:55] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:35:55,933 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:55] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:35:55,936 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:55] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:35:56,306 - INFO - 127.0.0.1 - - [18/Aug/2025 19:35:56] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:36:23,627 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:36:24,857 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:36:25,456 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:36:25,614 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:25] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:36:25,627 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:25] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:36:25,629 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:25] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:36:25,631 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:25] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:36:26,016 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:26] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:36:54,882 - ERROR - Error fetching data for LUNA/USDT: binance does not have market symbol LUNA/USDT
+2025-08-18 19:36:55,912 - ERROR - Error fetching data for MATIC/USDT: binance does not have market symbol MATIC/USDT
+2025-08-18 19:36:56,590 - ERROR - Error fetching data for ICP/USDT: binance does not have market symbol ICP/USDT
+2025-08-18 19:36:56,748 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:56] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:36:56,760 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:56] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:36:56,762 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:56] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:36:56,764 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:56] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:36:57,130 - INFO - 127.0.0.1 - - [18/Aug/2025 19:36:57] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:37:09,419 - INFO - Starting trading bot...
+2025-08-18 19:37:09,420 - INFO - Updating symbol list based on volume...
+2025-08-18 19:37:09,786 - INFO - Found 100 top volume USDT pairs
+2025-08-18 19:37:11,887 - INFO - Updated symbol list: 100 symbols with volume >= $1,000,000
+2025-08-18 19:37:11,889 - INFO - Trading 100 symbols: SOL/USDT:USDT, LINK/USDT:USDT, ETH/USDT:USDT, BCH/USDT:USDT, BTC/USDT:USDT, XRP/USDT:USDT, SUI/USDT:USDT, ADA/USDT:USDT, BNB/USDT:USDT, XLM/USDT:USDT...
+2025-08-18 19:37:11,889 - INFO - Running strategy analysis...
+2025-08-18 19:37:11,890 - INFO - Analyzing batch 1: 10 symbols (0-10)
+2025-08-18 19:37:11,890 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:11] "POST /api/bot/start HTTP/1.1" 200 -
+2025-08-18 19:37:12,449 - INFO - Signal detected: LINK/USDT:USDT - sell
+2025-08-18 19:37:14,485 - INFO - Batch complete. Signals found: 1
+2025-08-18 19:37:16,785 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:16] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:37:16,798 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:16] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:37:16,800 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:16] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:37:16,802 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:16] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:37:17,181 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:17] "GET /api/chart/LINK%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:37:21,243 - ERROR - Error creating charts for MATIC/USDT: 'dataframe'
+2025-08-18 19:37:21,244 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:21] "GET /api/chart/MATIC%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:37:24,894 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 19:37:24,895 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:24] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:37:26,509 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:26] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:37:26,524 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:26] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:37:26,527 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:26] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:37:26,528 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:26] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:37:26,544 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 19:37:26,544 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:26] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:37:44,486 - INFO - Running strategy analysis...
+2025-08-18 19:37:44,487 - INFO - Analyzing batch 2: 10 symbols (10-20)
+2025-08-18 19:37:46,826 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:37:56,515 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:56] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:37:56,529 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:56] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:37:56,532 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:56] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:37:56,535 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:56] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:37:56,552 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 19:37:56,553 - INFO - 127.0.0.1 - - [18/Aug/2025 19:37:56] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:38:16,827 - INFO - Running strategy analysis...
+2025-08-18 19:38:16,827 - INFO - Analyzing batch 3: 10 symbols (20-30)
+2025-08-18 19:38:19,197 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:38:26,037 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:26] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:38:26,051 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:26] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:38:26,053 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:26] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:38:26,055 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:26] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:38:26,070 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 19:38:26,071 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:26] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:38:49,198 - INFO - Running strategy analysis...
+2025-08-18 19:38:49,198 - INFO - Analyzing batch 4: 10 symbols (30-40)
+2025-08-18 19:38:52,358 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:38:56,442 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:56] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:38:56,454 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:56] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:38:56,456 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:56] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:38:56,459 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:56] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:38:56,475 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 19:38:56,477 - INFO - 127.0.0.1 - - [18/Aug/2025 19:38:56] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:39:22,359 - INFO - Running strategy analysis...
+2025-08-18 19:39:22,360 - INFO - Analyzing batch 5: 10 symbols (40-50)
+2025-08-18 19:39:24,893 - INFO - Batch complete. Signals found: 0
+2025-08-18 19:39:26,226 - INFO - 127.0.0.1 - - [18/Aug/2025 19:39:26] "POST /api/refresh_data HTTP/1.1" 200 -
+2025-08-18 19:39:26,232 - INFO - 127.0.0.1 - - [18/Aug/2025 19:39:26] "GET /api/bot/status HTTP/1.1" 200 -
+2025-08-18 19:39:26,232 - INFO - 127.0.0.1 - - [18/Aug/2025 19:39:26] "GET /api/trades HTTP/1.1" 200 -
+2025-08-18 19:39:26,233 - INFO - 127.0.0.1 - - [18/Aug/2025 19:39:26] "GET /api/chart/pnl HTTP/1.1" 200 -
+2025-08-18 19:39:26,241 - ERROR - Error creating charts for LUNA/USDT: 'dataframe'
+2025-08-18 19:39:26,242 - INFO - 127.0.0.1 - - [18/Aug/2025 19:39:26] "GET /api/chart/LUNA%2FUSDT HTTP/1.1" 200 -
+2025-08-18 19:39:54,635 - INFO - Stopping trading bot...
+2025-08-18 19:39:54,636 - INFO - Application stopped
