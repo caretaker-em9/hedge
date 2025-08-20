@@ -8,9 +8,23 @@ import sys
 import os
 import threading
 import time
+import asyncio
 from trading_bot import TradingBot, BotConfig
 from web_interface import app
 import logging
+
+# Import enhanced Telegram bot
+try:
+    from telegram_bot_enhanced import (
+        telegram_notifier, 
+        send_startup_notification, 
+        send_bot_ready_notification,
+        send_bot_stopped_notification
+    )
+    TELEGRAM_ENHANCED_AVAILABLE = True
+except ImportError:
+    TELEGRAM_ENHANCED_AVAILABLE = False
+    logging.warning("Enhanced Telegram bot not available")
 
 # Setup logging
 logging.basicConfig(
@@ -38,6 +52,18 @@ def load_config():
             max_symbols=getattr(config, 'MAX_SYMBOLS', 100),
             min_24h_volume=getattr(config, 'MIN_24H_VOLUME', 1000000),
             filter_by_volume=getattr(config, 'FILTER_BY_VOLUME', True),
+            # Hedging strategy parameters
+            initial_trade_size=getattr(config, 'INITIAL_TRADE_SIZE', 30.0),
+            long_position_size=getattr(config, 'LONG_POSITION_SIZE', 10.0),
+            short_position_size=getattr(config, 'SHORT_POSITION_SIZE', 15.0),
+            hedge_trigger_loss=getattr(config, 'HEDGE_TRIGGER_LOSS', -0.05),
+            one_trade_per_pair=getattr(config, 'ONE_TRADE_PER_PAIR', True),
+            exit_when_hedged=getattr(config, 'EXIT_WHEN_HEDGED', True),
+            min_hedge_profit_ratio=getattr(config, 'MIN_HEDGE_PROFIT_RATIO', 1.0),
+            # Telegram configuration
+            telegram_enabled=getattr(config, 'TELEGRAM_ENABLED', False),
+            telegram_bot_token=getattr(config, 'TELEGRAM_BOT_TOKEN', ''),
+            telegram_chat_id=getattr(config, 'TELEGRAM_CHAT_ID', ''),
             **config.STRATEGY_PARAMS
         )
         
@@ -64,6 +90,30 @@ def main():
     # Initialize global bot instance for web interface
     global bot
     bot = TradingBot(bot_config)
+    
+    # Send Telegram startup notification
+    if TELEGRAM_ENHANCED_AVAILABLE and getattr(config, 'TELEGRAM_ENABLED', False):
+        try:
+            # Prepare trading configuration for startup message
+            trading_config = {
+                'initial_balance': bot_config.initial_balance,
+                'max_trades': bot_config.max_trades,
+                'leverage': bot_config.leverage,
+                'timeframe': bot_config.timeframe,
+                'long_position_size': getattr(bot_config, 'long_position_size', 5.0),
+                'short_position_size': getattr(bot_config, 'short_position_size', 10.0),
+                'hedge_trigger_loss': getattr(bot_config, 'hedge_trigger_loss', -0.05),
+                'one_trade_per_pair': getattr(bot_config, 'one_trade_per_pair', True)
+            }
+            
+            # Send startup notification synchronously
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(send_startup_notification(trading_config))
+            loop.close()
+            logger.info("Telegram startup notification sent")
+        except Exception as e:
+            logger.error(f"Error sending Telegram startup notification: {e}")
     
     # Update web interface app configuration
     app.secret_key = config.SECRET_KEY

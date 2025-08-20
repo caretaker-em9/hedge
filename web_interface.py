@@ -4,7 +4,7 @@ Web Interface for Trading Bot
 Flask-based web dashboard to monitor trades, view charts, and control the bot
 """
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for, flash
 import plotly.graph_objs as go
 import plotly.utils
 import json
@@ -15,125 +15,194 @@ from trading_bot import TradingBot, BotConfig
 import threading
 import time
 import logging
+from functools import wraps
 
 # Setup logger
 logger = logging.getLogger(__name__)
 
+# Load configuration for authentication
+try:
+    import config
+    WEB_USERNAME = getattr(config, 'WEB_USERNAME', 'admin')
+    WEB_PASSWORD = getattr(config, 'WEB_PASSWORD', 'hedge123')
+    SESSION_TIMEOUT = getattr(config, 'SESSION_TIMEOUT', 3600)
+    SECRET_KEY = getattr(config, 'SECRET_KEY', 'trading_bot_secret_key_change_this_in_production')
+except ImportError:
+    WEB_USERNAME = 'admin'
+    WEB_PASSWORD = 'hedge123'
+    SESSION_TIMEOUT = 3600
+    SECRET_KEY = 'default_secret_key_change_this'
+
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = SECRET_KEY
+app.permanent_session_lifetime = timedelta(seconds=SESSION_TIMEOUT)
+
+# Authentication decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session or not session.get('logged_in'):
+            if request.endpoint and request.endpoint.startswith('api'):
+                return jsonify({'error': 'Authentication required'}), 401
+            return redirect(url_for('login'))
+        
+        # Check session timeout
+        if 'login_time' in session:
+            if datetime.now().timestamp() - session['login_time'] > SESSION_TIMEOUT:
+                session.clear()
+                if request.endpoint and request.endpoint.startswith('api'):
+                    return jsonify({'error': 'Session expired'}), 401
+                flash('Session expired. Please log in again.', 'warning')
+                return redirect(url_for('login'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Global bot instance
 bot = None
 bot_thread = None
 
 def create_candlestick_chart(symbol_data, signals_df=None):
-    """Create candlestick chart with entry/exit signals and volume"""
+    """Create candlestick chart using Freqtrade-style plotting mechanism"""
     df = symbol_data['dataframe']
     
-    # Create subplots with secondary y-axis for volume
+    # Freqtrade-style chart creation
     from plotly.subplots import make_subplots
+    import plotly.graph_objects as go
     
+    # Create figure with subplots (price + volume)
     fig = make_subplots(
         rows=2, cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.1,
-        subplot_titles=(f'{symbol_data["symbol"]} - Price Chart with Signals', 'Volume'),
-        row_heights=[0.7, 0.3]
+        vertical_spacing=0.05,
+        subplot_titles=(f'{symbol_data["symbol"]} Price Chart', 'Volume'),
+        row_heights=[0.8, 0.2],
+        specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
     )
     
-    # Create candlestick trace with enhanced styling
+    # Ensure we have the required OHLCV columns
+    required_cols = ['open', 'high', 'low', 'close', 'volume']
+    if not all(col in df.columns for col in required_cols):
+        return json.dumps({'error': 'Missing OHLCV data'}, cls=plotly.utils.PlotlyJSONEncoder)
+    
+    # Create candlestick trace - Freqtrade style
     candlestick = go.Candlestick(
         x=df.index,
         open=df['open'],
         high=df['high'],
         low=df['low'],
         close=df['close'],
-        name='Price',
-        increasing_line_color='#00ff88',  # Green for bullish candles
-        decreasing_line_color='#ff4444',  # Red for bearish candles
-        increasing_fillcolor='#00ff88',
-        decreasing_fillcolor='#ff4444',
+        name='OHLC',
+        increasing_line_color='#26A69A',  # Freqtrade green
+        decreasing_line_color='#EF5350',  # Freqtrade red
+        increasing_fillcolor='#26A69A',
+        decreasing_fillcolor='#EF5350',
         line=dict(width=1),
-        showlegend=True
+        showlegend=False
     )
     
+    # Add candlestick to main plot
     fig.add_trace(candlestick, row=1, col=1)
     
-    # Add volume bars
-    colors = ['#00ff88' if close >= open else '#ff4444' 
+    # Add volume bars - Freqtrade style
+    colors = ['#26A69A' if close >= open else '#EF5350' 
               for close, open in zip(df['close'], df['open'])]
     
-    volume_bars = go.Bar(
+    volume_trace = go.Bar(
         x=df.index,
         y=df['volume'],
         name='Volume',
         marker_color=colors,
-        opacity=0.7,
-        showlegend=True
+        opacity=0.6,
+        showlegend=False
     )
     
-    fig.add_trace(volume_bars, row=2, col=1)
+    fig.add_trace(volume_trace, row=2, col=1)
     
-    # Add moving averages
-    if f'ma_buy_{bot.config.base_nb_candles_buy}' in df.columns:
-        ma_buy = go.Scatter(
-            x=df.index,
-            y=df[f'ma_buy_{bot.config.base_nb_candles_buy}'],
-            mode='lines',
-            name=f'EMA Buy ({bot.config.base_nb_candles_buy})',
-            line=dict(color='#2E86AB', width=2, dash='solid'),
-            opacity=0.8
-        )
-        fig.add_trace(ma_buy, row=1, col=1)
-    
-    if f'ma_sell_{bot.config.base_nb_candles_sell}' in df.columns:
-        ma_sell = go.Scatter(
-            x=df.index,
-            y=df[f'ma_sell_{bot.config.base_nb_candles_sell}'],
-            mode='lines',
-            name=f'EMA Sell ({bot.config.base_nb_candles_sell})',
-            line=dict(color='#F18F01', width=2, dash='solid'),
-            opacity=0.8
-        )
-        fig.add_trace(ma_sell, row=1, col=1)
-    
-    # Add entry signals with enhanced markers
+    # Add buy signals - Freqtrade style
     if 'enter_long' in df.columns:
-        entry_signals = df[df['enter_long'] == 1]
-        if not entry_signals.empty:
-            entry_scatter = go.Scatter(
-                x=entry_signals.index,
-                y=entry_signals['close'],
+        buy_signals = df[df['enter_long'] == 1]
+        if not buy_signals.empty:
+            buy_scatter = go.Scatter(
+                x=buy_signals.index,
+                y=buy_signals['low'] * 0.998,  # Place slightly below low
                 mode='markers',
-                name='Buy Signals',
+                name='Buy Signal',
                 marker=dict(
-                    color='#00ff00',
-                    size=12,
                     symbol='triangle-up',
-                    line=dict(color='#008800', width=2)
+                    size=10,
+                    color='#00FF00',
+                    line=dict(color='#008000', width=1)
                 ),
-                hovertemplate='<b>BUY SIGNAL</b><br>Price: $%{y:.4f}<br>Time: %{x}<extra></extra>'
+                showlegend=True,
+                hovertemplate='<b>BUY</b><br>Price: %{text}<br>%{x}<extra></extra>',
+                text=[f'${price:.2f}' for price in buy_signals['close']]
             )
-            fig.add_trace(entry_scatter, row=1, col=1)
+            fig.add_trace(buy_scatter, row=1, col=1)
     
-    # Add exit signals with enhanced markers
+    # Add sell signals - Freqtrade style  
     if 'exit_long' in df.columns:
-        exit_signals = df[df['exit_long'] == 1]
-        if not exit_signals.empty:
-            exit_scatter = go.Scatter(
-                x=exit_signals.index,
-                y=exit_signals['close'],
+        sell_signals = df[df['exit_long'] == 1]
+        if not sell_signals.empty:
+            sell_scatter = go.Scatter(
+                x=sell_signals.index,
+                y=sell_signals['high'] * 1.002,  # Place slightly above high
                 mode='markers',
-                name='Sell Signals',
+                name='Sell Signal',
                 marker=dict(
-                    color='#ff0000',
-                    size=12,
                     symbol='triangle-down',
-                    line=dict(color='#880000', width=2)
+                    size=10,
+                    color='#FF0000',
+                    line=dict(color='#800000', width=1)
                 ),
-                hovertemplate='<b>SELL SIGNAL</b><br>Price: $%{y:.4f}<br>Time: %{x}<extra></extra>'
+                showlegend=True,
+                hovertemplate='<b>SELL</b><br>Price: %{text}<br>%{x}<extra></extra>',
+                text=[f'${price:.2f}' for price in sell_signals['close']]
             )
-            fig.add_trace(exit_scatter, row=1, col=1)
+            fig.add_trace(sell_scatter, row=1, col=1)
+    
+    # Update layout - Freqtrade style
+    fig.update_layout(
+        title=f'{symbol_data["symbol"]} Trading Chart',
+        xaxis_rangeslider_visible=False,
+        template='plotly_white',
+        height=600,
+        margin=dict(l=50, r=50, t=50, b=50),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    # Update axes
+    fig.update_xaxes(
+        title_text="Time",
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='rgba(128,128,128,0.2)',
+        row=2, col=1
+    )
+    
+    fig.update_yaxes(
+        title_text="Price (USDT)",
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='rgba(128,128,128,0.2)',
+        row=1, col=1
+    )
+    
+    fig.update_yaxes(
+        title_text="Volume",
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='rgba(128,128,128,0.2)',
+        row=2, col=1
+    )
+    
+    return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     
     # Update layout with enhanced styling
     fig.update_layout(
@@ -439,12 +508,41 @@ def create_pnl_chart():
     fig = go.Figure(data=[baseline, trace, trade_markers], layout=layout)
     return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
+# Authentication routes
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username == WEB_USERNAME and password == WEB_PASSWORD:
+            session.permanent = True
+            session['logged_in'] = True
+            session['username'] = username
+            session['login_time'] = datetime.now().timestamp()
+            flash('Successfully logged in!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password!', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Logout and clear session"""
+    session.clear()
+    flash('Successfully logged out!', 'info')
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def dashboard():
     """Main dashboard"""
     return render_template('dashboard.html')
 
 @app.route('/api/bot/status')
+@login_required
 def bot_status():
     """Get bot status"""
     if not bot:
@@ -457,6 +555,7 @@ def bot_status():
     })
 
 @app.route('/api/bot/start', methods=['POST'])
+@login_required
 def start_bot():
     """Start the trading bot"""
     global bot, bot_thread
@@ -476,6 +575,7 @@ def start_bot():
         return jsonify({'success': False, 'message': f'Error starting bot: {str(e)}'})
 
 @app.route('/api/bot/stop', methods=['POST'])
+@login_required
 def stop_bot():
     """Stop the trading bot"""
     global bot
@@ -491,8 +591,9 @@ def stop_bot():
         return jsonify({'success': False, 'message': f'Error stopping bot: {str(e)}'})
 
 @app.route('/api/trades')
+@login_required
 def get_trades():
-    """Get all trades"""
+    """Get all trades with detailed entry/exit reasons"""
     if not bot:
         return jsonify([])
     
@@ -511,13 +612,21 @@ def get_trades():
             'exit_price': trade.exit_price,
             'exit_timestamp': trade.exit_timestamp.isoformat() if trade.exit_timestamp else None,
             'pnl': trade.pnl,
-            'pnl_percentage': trade.pnl_percentage
+            'pnl_percentage': trade.pnl_percentage,
+            'trade_type': getattr(trade, 'trade_type', 'normal'),
+            'pair_id': getattr(trade, 'pair_id', None),
+            # Detailed reasons
+            'entry_reason': getattr(trade, 'entry_reason', 'Standard entry'),
+            'exit_reason': getattr(trade, 'exit_reason', None),
+            'technical_indicators': getattr(trade, 'technical_indicators', {}),
+            'market_conditions': getattr(trade, 'market_conditions', 'Normal conditions')
         }
         trades_data.append(trade_dict)
     
     return jsonify(trades_data)
 
 @app.route('/api/chart/<path:symbol>')
+@login_required
 def get_chart(symbol):
     """Get chart data for a symbol"""
     if not bot:
@@ -551,12 +660,14 @@ def get_chart(symbol):
         return jsonify({'error': f'Failed to create charts: {str(e)}'})
 
 @app.route('/api/chart/pnl')
+@login_required
 def get_pnl_chart():
     """Get P&L chart"""
     pnl_chart = create_pnl_chart()
     return jsonify({'pnl_chart': pnl_chart})
 
 @app.route('/api/symbols')
+@login_required
 def get_symbols():
     """Get available symbols"""
     if not bot:
@@ -640,12 +751,61 @@ def refresh_data():
         return jsonify({'success': False, 'message': f'Error refreshing data: {str(e)}'})
 
 @app.route('/api/portfolio')
+@login_required
 def get_portfolio():
     """Get portfolio summary"""
     if not bot:
         return jsonify({})
     
     return jsonify(bot.get_portfolio_summary())
+
+@app.route('/api/hedge_pairs')
+@login_required
+def get_hedge_pairs():
+    """Get hedge pairs status"""
+    if not bot:
+        return jsonify([])
+    
+    hedge_pairs_data = []
+    for pair in bot.hedge_pairs:
+        pair_data = {
+            'pair_id': pair.pair_id,
+            'symbol': pair.symbol,
+            'status': pair.status,
+            'total_allocation': pair.total_allocation,
+            'long_size': pair.long_size,
+            'short_size': pair.short_size,
+            'hedge_trigger': pair.hedge_trigger,
+            'created_timestamp': pair.created_timestamp.isoformat() if pair.created_timestamp else None,
+            'long_trade': None,
+            'short_trade': None
+        }
+        
+        if pair.long_trade:
+            pair_data['long_trade'] = {
+                'id': pair.long_trade.id,
+                'price': pair.long_trade.price,
+                'amount': pair.long_trade.amount,
+                'timestamp': pair.long_trade.timestamp.isoformat(),
+                'status': pair.long_trade.status,
+                'pnl': pair.long_trade.pnl,
+                'pnl_percentage': pair.long_trade.pnl_percentage
+            }
+        
+        if pair.short_trade:
+            pair_data['short_trade'] = {
+                'id': pair.short_trade.id,
+                'price': pair.short_trade.price,
+                'amount': pair.short_trade.amount,
+                'timestamp': pair.short_trade.timestamp.isoformat(),
+                'status': pair.short_trade.status,
+                'pnl': pair.short_trade.pnl,
+                'pnl_percentage': pair.short_trade.pnl_percentage
+            }
+        
+        hedge_pairs_data.append(pair_data)
+    
+    return jsonify(hedge_pairs_data)
 
 if __name__ == '__main__':
     # Initialize bot

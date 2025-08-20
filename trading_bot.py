@@ -13,7 +13,7 @@ import logging
 import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from functools import reduce
 import asyncio
 import threading
@@ -29,9 +29,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Import telegram bot for notifications
+try:
+    from telegram_bot import telegram_bot, send_trade_entry_notification, send_trade_exit_notification, send_hedge_completion_notification, send_error_notification, send_bot_status_notification
+    TELEGRAM_AVAILABLE = True
+except ImportError:
+    TELEGRAM_AVAILABLE = False
+    logger.warning("Telegram bot module not available. Notifications will be disabled.")
+
+# Import enhanced telegram bot for startup messages
+try:
+    from telegram_bot_enhanced import send_bot_ready_notification, send_bot_stopped_notification
+    TELEGRAM_ENHANCED_AVAILABLE = True
+except ImportError:
+    TELEGRAM_ENHANCED_AVAILABLE = False
+
 @dataclass
 class Trade:
-    """Trade data structure"""
+    """Trade data structure with detailed entry/exit reasons"""
     id: str
     symbol: str
     side: str  # 'buy' or 'sell'
@@ -45,6 +60,28 @@ class Trade:
     exit_timestamp: Optional[datetime] = None
     pnl: Optional[float] = None
     pnl_percentage: Optional[float] = None
+    trade_type: str = 'normal'  # 'normal', 'long', 'hedge'
+    pair_id: Optional[str] = None  # Links hedge trades together
+    
+    # Detailed reasons
+    entry_reason: Optional[str] = None  # Detailed entry analysis
+    exit_reason: Optional[str] = None   # Detailed exit analysis
+    technical_indicators: Optional[Dict] = None  # Technical indicator values at entry
+    market_conditions: Optional[str] = None  # Market condition description
+
+@dataclass
+class HedgePair:
+    """Hedge trade pair structure"""
+    pair_id: str
+    symbol: str
+    long_trade: Optional[Trade] = None
+    short_trade: Optional[Trade] = None
+    status: str = 'long_only'  # 'long_only', 'hedged', 'closed'
+    total_allocation: float = 30.0  # Total money allocated to this pair
+    long_size: float = 10.0  # Size of long position
+    short_size: float = 15.0  # Size of short hedge position
+    hedge_trigger: float = -0.05  # -5% loss triggers hedge
+    created_timestamp: Optional[datetime] = None
 
 @dataclass
 class BotConfig:
@@ -73,6 +110,20 @@ class BotConfig:
     min_24h_volume: float = 1000000
     filter_by_volume: bool = True
     
+    # Telegram configuration
+    telegram_enabled: bool = False
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+    
+    # Hedging strategy parameters
+    initial_trade_size: float = 30.0
+    long_position_size: float = 10.0
+    short_position_size: float = 15.0
+    hedge_trigger_loss: float = -0.05
+    one_trade_per_pair: bool = True
+    exit_when_hedged: bool = True
+    min_hedge_profit_ratio: float = 1.0
+    
     def __post_init__(self):
         if self.symbols is None:
             self.symbols = [
@@ -96,16 +147,12 @@ class TradingStrategy:
     
     def populate_indicators(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """Populate technical indicators"""
-        # Create all moving averages at once to avoid DataFrame fragmentation
+        # Create only the specific moving averages needed by the strategy
         ma_columns = {}
         
-        # Calculate all buy moving averages
-        for val in range(5, 81):  # Range similar to original IntParameter
-            ma_columns[f'ma_buy_{val}'] = ta.EMA(dataframe, timeperiod=val)
-        
-        # Calculate all sell moving averages
-        for val in range(5, 81):
-            ma_columns[f'ma_sell_{val}'] = ta.EMA(dataframe, timeperiod=val)
+        # Calculate only the specific buy and sell moving averages from config
+        ma_columns[f'ma_buy_{self.config.base_nb_candles_buy}'] = ta.EMA(dataframe, timeperiod=self.config.base_nb_candles_buy)
+        ma_columns[f'ma_sell_{self.config.base_nb_candles_sell}'] = ta.EMA(dataframe, timeperiod=self.config.base_nb_candles_sell)
         
         # Calculate other indicators
         ma_columns['EWO'] = EWO(dataframe, self.config.fast_ewo, self.config.slow_ewo)
@@ -169,16 +216,18 @@ class TradingStrategy:
         return dataframe
 
 class TradingBot:
-    """Main trading bot class"""
+    """Main trading bot class with hedging strategy"""
     
     def __init__(self, config: BotConfig):
         self.config = config
         self.strategy = TradingStrategy(config)
         self.exchange = None
         self.trades: List[Trade] = []
+        self.hedge_pairs: List[HedgePair] = []
         self.balance = config.initial_balance
         self.is_running = False
         self.data_cache = {}
+        self.telegram_enabled = TELEGRAM_AVAILABLE and getattr(config, 'telegram_enabled', False)
         
         # Initialize exchange
         self._init_exchange()
@@ -404,73 +453,325 @@ class TradingBot:
         }
     
     def execute_trade(self, symbol: str, side: str, analysis: Dict):
-        """Execute a trade"""
+        """Execute a trade using hedging strategy"""
         try:
-            # Check if we have available trades
-            open_trades = [t for t in self.trades if t.status == 'open']
-            if side == 'buy' and len(open_trades) >= self.config.max_trades:
-                logger.info(f"Maximum trades ({self.config.max_trades}) already open")
+            # For hedging strategy, we only process 'buy' signals to start new hedge pairs
+            if side != 'buy':
                 return
             
-            # Calculate position size (risk per trade)
-            risk_per_trade = self.balance * 0.02  # 2% risk per trade
-            position_size = risk_per_trade / abs(self.config.stoploss)
+            # Check if we already have a hedge pair for this symbol
+            existing_pair = self.get_hedge_pair_by_symbol(symbol)
+            if existing_pair and existing_pair.status != 'closed':
+                logger.info(f"Hedge pair already exists for {symbol}, skipping")
+                return
             
-            # Apply leverage
-            position_size *= self.config.leverage
+            # Check if we can start a new hedge pair
+            active_pairs = [hp for hp in self.hedge_pairs if hp.status != 'closed']
+            if len(active_pairs) >= self.config.max_trades:
+                logger.info(f"Maximum hedge pairs ({self.config.max_trades}) already active")
+                return
             
-            if side == 'buy':
-                # Place buy order
-                order = self.exchange.create_market_order(
-                    symbol, 'buy', position_size,
-                    params={'leverage': self.config.leverage}
-                )
-                
-                trade = Trade(
-                    id=order['id'],
-                    symbol=symbol,
-                    side=side,
-                    amount=position_size,
-                    price=analysis['price'],
-                    timestamp=datetime.now(),
-                    status='open',
-                    entry_signal=f"EWO: {analysis['ewo']:.2f}, RSI: {analysis['rsi']:.2f}"
-                )
-                
-                self.trades.append(trade)
-                logger.info(f"Opened long position: {symbol} at {analysis['price']:.2f}")
-                
-            elif side == 'sell':
-                # Find open position to close
-                open_position = next((t for t in open_trades if t.symbol == symbol), None)
-                if open_position:
-                    order = self.exchange.create_market_order(
-                        symbol, 'sell', open_position.amount,
-                        params={'leverage': self.config.leverage}
-                    )
+            # Create new hedge pair and execute initial long position
+            pair_id = f"{symbol}_{int(time.time())}"
+            hedge_pair = HedgePair(
+                pair_id=pair_id,
+                symbol=symbol,
+                total_allocation=self.config.initial_trade_size,
+                long_size=self.config.long_position_size,
+                short_size=self.config.short_position_size,
+                hedge_trigger=self.config.hedge_trigger_loss,
+                created_timestamp=datetime.now()
+            )
+            
+            # Execute long position
+            long_trade = self._execute_position(
+                symbol=symbol,
+                side='buy',
+                size=self.config.long_position_size,
+                analysis=analysis,
+                trade_type='long',
+                pair_id=pair_id
+            )
+            
+            if long_trade:
+                hedge_pair.long_trade = long_trade
+                hedge_pair.status = 'long_only'
+                self.hedge_pairs.append(hedge_pair)
+                logger.info(f"Started new hedge pair for {symbol}: Long ${self.config.long_position_size}")
+            
+        except Exception as e:
+            logger.error(f"Error executing hedge trade for {symbol}: {e}")
+    
+    def _execute_position(self, symbol: str, side: str, size: float, analysis: Dict, 
+                         trade_type: str = 'normal', pair_id: Optional[str] = None) -> Optional[Trade]:
+        """Execute a single position (long or short) with detailed reasons"""
+        try:
+            # Calculate position size with leverage
+            position_size = size * self.config.leverage
+            
+            # Create detailed entry reason based on trade type
+            if trade_type == 'long':
+                entry_reason = self._generate_long_entry_reason(analysis)
+                market_conditions = self._assess_market_conditions(symbol, analysis)
+            elif trade_type == 'hedge':
+                entry_reason = self._generate_hedge_entry_reason(analysis, pair_id)
+                market_conditions = "Defensive hedge position due to long position loss"
+            else:
+                entry_reason = "Standard entry based on strategy signals"
+                market_conditions = "Normal market conditions"
+            
+            # Create order
+            order = self.exchange.create_market_order(
+                symbol, side, position_size,
+                params={'leverage': self.config.leverage}
+            )
+            
+            trade = Trade(
+                id=order['id'],
+                symbol=symbol,
+                side=side,
+                amount=position_size,
+                price=analysis['price'],
+                timestamp=datetime.now(),
+                status='open',
+                entry_signal=f"EWO: {analysis['ewo']:.2f}, RSI: {analysis['rsi']:.2f}",
+                trade_type=trade_type,
+                pair_id=pair_id,
+                entry_reason=entry_reason,
+                technical_indicators={
+                    'ewo': analysis.get('ewo', 0),
+                    'rsi': analysis.get('rsi', 50),
+                    'price': analysis['price'],
+                    'volume': analysis.get('volume', 0)
+                },
+                market_conditions=market_conditions
+            )
+            
+            self.trades.append(trade)
+            logger.info(f"Opened {trade_type} position: {side} {symbol} at {analysis['price']:.2f}, size: ${size}")
+            logger.info(f"Entry reason: {entry_reason}")
+            
+            # Send Telegram notification for trade entry
+            if self.telegram_enabled:
+                try:
+                    # Convert trade to dict for telegram notification
+                    trade_dict = asdict(trade)
+                    # Convert datetime to timestamp for JSON serialization
+                    trade_dict['timestamp'] = trade.timestamp.timestamp()
+                    trade_dict['market_conditions'] = {'description': market_conditions}
                     
-                    # Update trade
-                    open_position.status = 'closed'
-                    open_position.exit_price = analysis['price']
-                    open_position.exit_timestamp = datetime.now()
-                    open_position.exit_signal = f"MA Sell Signal"
+                    # Send notification asynchronously
+                    asyncio.create_task(send_trade_entry_notification(trade_dict))
+                except Exception as e:
+                    logger.error(f"Error sending Telegram entry notification: {e}")
+            
+            return trade
+            
+        except Exception as e:
+            logger.error(f"Error executing {side} position for {symbol}: {e}")
+            return None
+    
+    def _generate_long_entry_reason(self, analysis: Dict) -> str:
+        """Generate detailed reason for long entry"""
+        reasons = []
+        
+        # EWO analysis
+        ewo = analysis.get('ewo', 0)
+        if ewo > self.config.ewo_high:
+            reasons.append(f"EWO bullish signal ({ewo:.2f} > {self.config.ewo_high})")
+        elif ewo < self.config.ewo_low:
+            reasons.append(f"EWO oversold signal ({ewo:.2f} < {self.config.ewo_low})")
+        
+        # RSI analysis
+        rsi = analysis.get('rsi', 50)
+        if rsi < self.config.rsi_buy:
+            reasons.append(f"RSI favorable ({rsi:.1f} < {self.config.rsi_buy})")
+        
+        # Price action
+        reasons.append("Price below moving average threshold (pullback opportunity)")
+        
+        # Volume confirmation
+        if analysis.get('volume', 0) > 0:
+            reasons.append("Volume confirmation present")
+        
+        return "; ".join(reasons)
+    
+    def _generate_hedge_entry_reason(self, analysis: Dict, pair_id: str) -> str:
+        """Generate detailed reason for hedge entry"""
+        return f"Risk management hedge activated for pair {pair_id} due to -5% loss threshold breach. Short position to offset long exposure and limit downside risk."
+    
+    def _assess_market_conditions(self, symbol: str, analysis: Dict) -> str:
+        """Assess current market conditions"""
+        conditions = []
+        
+        ewo = analysis.get('ewo', 0)
+        rsi = analysis.get('rsi', 50)
+        
+        # Trend assessment
+        if ewo > 0:
+            conditions.append("Bullish momentum")
+        else:
+            conditions.append("Bearish momentum")
+        
+        # Oversold/overbought
+        if rsi < 30:
+            conditions.append("Oversold conditions")
+        elif rsi > 70:
+            conditions.append("Overbought conditions")
+        else:
+            conditions.append("Neutral RSI")
+        
+        # Volatility assessment
+        conditions.append("Active trading session")
+        
+        return "; ".join(conditions)
+    
+    def get_hedge_pair_by_symbol(self, symbol: str) -> Optional[HedgePair]:
+        """Get hedge pair by symbol"""
+        for pair in self.hedge_pairs:
+            if pair.symbol == symbol:
+                return pair
+        return None
+    
+    def check_hedge_triggers(self):
+        """Check if any long positions need hedging"""
+        for hedge_pair in self.hedge_pairs:
+            if hedge_pair.status == 'long_only' and hedge_pair.long_trade:
+                # Calculate current P&L of long position
+                current_price = self._get_current_price(hedge_pair.symbol)
+                if current_price:
+                    pnl_pct = (current_price - hedge_pair.long_trade.price) / hedge_pair.long_trade.price
                     
-                    # Calculate PnL
-                    price_diff = open_position.exit_price - open_position.price
-                    open_position.pnl = price_diff * open_position.amount
-                    open_position.pnl_percentage = (price_diff / open_position.price) * 100 * self.config.leverage
-                    
-                    # Update balance
-                    self.balance += open_position.pnl
-                    
-                    logger.info(f"Closed position: {symbol} at {analysis['price']:.2f}, PnL: {open_position.pnl:.2f}")
+                    # Check if we need to hedge
+                    if pnl_pct <= hedge_pair.hedge_trigger:
+                        logger.info(f"Hedge trigger hit for {hedge_pair.symbol}: {pnl_pct:.2%} loss")
+                        self._execute_hedge(hedge_pair, current_price)
+    
+    def _execute_hedge(self, hedge_pair: HedgePair, current_price: float):
+        """Execute hedge (short) position"""
+        try:
+            analysis = {'price': current_price, 'ewo': 0, 'rsi': 50}  # Dummy analysis for hedge
+            
+            short_trade = self._execute_position(
+                symbol=hedge_pair.symbol,
+                side='sell',
+                size=hedge_pair.short_size,
+                analysis=analysis,
+                trade_type='hedge',
+                pair_id=hedge_pair.pair_id
+            )
+            
+            if short_trade:
+                hedge_pair.short_trade = short_trade
+                hedge_pair.status = 'hedged'
+                logger.info(f"Executed hedge for {hedge_pair.symbol}: Short ${hedge_pair.short_size}")
         
         except Exception as e:
-            logger.error(f"Error executing trade: {e}")
+            logger.error(f"Error executing hedge for {hedge_pair.symbol}: {e}")
+    
+    def check_hedge_exits(self):
+        """Check if hedged positions should be closed"""
+        for hedge_pair in self.hedge_pairs:
+            if hedge_pair.status == 'hedged' and hedge_pair.long_trade and hedge_pair.short_trade:
+                current_price = self._get_current_price(hedge_pair.symbol)
+                if current_price:
+                    # Calculate P&L for both positions
+                    long_pnl = (current_price - hedge_pair.long_trade.price) * hedge_pair.long_trade.amount
+                    short_pnl = (hedge_pair.short_trade.price - current_price) * hedge_pair.short_trade.amount
+                    
+                    # Check if hedge profit covers long loss (with minimum ratio)
+                    if long_pnl < 0 and short_pnl > 0:
+                        hedge_coverage = short_pnl / abs(long_pnl)
+                        if hedge_coverage >= self.config.min_hedge_profit_ratio:
+                            logger.info(f"Hedge coverage achieved for {hedge_pair.symbol}: {hedge_coverage:.2f}x")
+                            self._close_hedge_pair(hedge_pair, current_price)
+    
+    def _close_hedge_pair(self, hedge_pair: HedgePair, current_price: float):
+        """Close both positions in a hedge pair with detailed exit reasons"""
+        try:
+            # Calculate final P&L for exit reasons
+            long_pnl = (current_price - hedge_pair.long_trade.price) * hedge_pair.long_trade.amount if hedge_pair.long_trade else 0
+            short_pnl = (hedge_pair.short_trade.price - current_price) * hedge_pair.short_trade.amount if hedge_pair.short_trade else 0
+            total_pnl = long_pnl + short_pnl
+            coverage_ratio = short_pnl / abs(long_pnl) if long_pnl < 0 else 0
+            
+            # Generate detailed exit reasons
+            exit_reason = f"Hedge target achieved: Short profit (${short_pnl:.2f}) covers long loss (${long_pnl:.2f}) with {coverage_ratio:.2f}x coverage ratio. Risk management objective met."
+            
+            # Close long position
+            if hedge_pair.long_trade and hedge_pair.long_trade.status == 'open':
+                self.exchange.create_market_order(
+                    hedge_pair.symbol, 'sell', hedge_pair.long_trade.amount,
+                    params={'leverage': self.config.leverage}
+                )
+                hedge_pair.long_trade.status = 'closed'
+                hedge_pair.long_trade.exit_price = current_price
+                hedge_pair.long_trade.exit_timestamp = datetime.now()
+                hedge_pair.long_trade.exit_reason = f"Hedge pair closure: Long position closed at ${current_price:.2f}. Loss contained by hedging strategy."
+                hedge_pair.long_trade.pnl = long_pnl
+                hedge_pair.long_trade.pnl_percentage = (long_pnl / (hedge_pair.long_trade.price * hedge_pair.long_trade.amount)) * 100
+            
+            # Close short position
+            if hedge_pair.short_trade and hedge_pair.short_trade.status == 'open':
+                self.exchange.create_market_order(
+                    hedge_pair.symbol, 'buy', hedge_pair.short_trade.amount,
+                    params={'leverage': self.config.leverage}
+                )
+                hedge_pair.short_trade.status = 'closed'
+                hedge_pair.short_trade.exit_price = current_price
+                hedge_pair.short_trade.exit_timestamp = datetime.now()
+                hedge_pair.short_trade.exit_reason = f"Hedge pair closure: Short hedge successful at ${current_price:.2f}. Target coverage achieved, risk mitigated."
+                hedge_pair.short_trade.pnl = short_pnl
+                hedge_pair.short_trade.pnl_percentage = (short_pnl / (hedge_pair.short_trade.price * hedge_pair.short_trade.amount)) * 100
+            
+            hedge_pair.status = 'closed'
+            logger.info(f"Closed hedge pair for {hedge_pair.symbol}")
+            logger.info(f"Exit reason: {exit_reason}")
+            
+            # Send Telegram notifications for trade exits and hedge completion
+            if self.telegram_enabled:
+                try:
+                    # Send individual exit notifications
+                    if hedge_pair.long_trade:
+                        long_dict = asdict(hedge_pair.long_trade)
+                        long_dict['timestamp'] = hedge_pair.long_trade.timestamp.timestamp()
+                        if hedge_pair.long_trade.exit_timestamp:
+                            long_dict['exit_timestamp'] = hedge_pair.long_trade.exit_timestamp.timestamp()
+                        asyncio.create_task(send_trade_exit_notification(long_dict))
+                    
+                    if hedge_pair.short_trade:
+                        short_dict = asdict(hedge_pair.short_trade)
+                        short_dict['timestamp'] = hedge_pair.short_trade.timestamp.timestamp()
+                        if hedge_pair.short_trade.exit_timestamp:
+                            short_dict['exit_timestamp'] = hedge_pair.short_trade.exit_timestamp.timestamp()
+                        asyncio.create_task(send_trade_exit_notification(short_dict))
+                    
+                    # Send hedge completion summary
+                    if hedge_pair.long_trade and hedge_pair.short_trade:
+                        asyncio.create_task(send_hedge_completion_notification(
+                            asdict(hedge_pair.long_trade), 
+                            asdict(hedge_pair.short_trade), 
+                            total_pnl
+                        ))
+                except Exception as e:
+                    logger.error(f"Error sending Telegram exit notifications: {e}")
+            
+        except Exception as e:
+            logger.error(f"Error closing hedge pair for {hedge_pair.symbol}: {e}")
+    
+    def _get_current_price(self, symbol: str) -> Optional[float]:
+        """Get current price for a symbol"""
+        try:
+            ticker = self.exchange.fetch_ticker(symbol)
+            return ticker['last']
+        except Exception as e:
+            logger.error(f"Error fetching price for {symbol}: {e}")
+            return None
     
     def check_stop_loss(self):
-        """Check and execute stop loss for open positions"""
-        open_trades = [t for t in self.trades if t.status == 'open']
+        """Check and execute stop loss for open non-hedge positions"""
+        # Only check stop loss for trades that are not part of hedge pairs
+        open_trades = [t for t in self.trades if t.status == 'open' and t.trade_type == 'normal']
         
         for trade in open_trades:
             try:
@@ -497,9 +798,11 @@ class TradingBot:
                     
             except Exception as e:
                 logger.error(f"Error checking stop loss for {trade.symbol}: {e}")
+            except Exception as e:
+                logger.error(f"Error checking stop loss for {trade.symbol}: {e}")
     
     def run_strategy(self):
-        """Main strategy execution loop"""
+        """Main strategy execution loop with hedging"""
         symbol_batch_size = 10  # Process symbols in batches to avoid overwhelming
         symbol_rotation = 0
         
@@ -507,7 +810,11 @@ class TradingBot:
             try:
                 logger.info("Running strategy analysis...")
                 
-                # Check stop losses first
+                # Check hedge triggers and exits first
+                self.check_hedge_triggers()
+                self.check_hedge_exits()
+                
+                # Check stop losses for any remaining non-hedge trades
                 self.check_stop_loss()
                 
                 # Process symbols in batches to manage load
@@ -541,6 +848,13 @@ class TradingBot:
                 
                 logger.info(f"Batch complete. Signals found: {signals_found}")
                 
+                # Log hedge pair status
+                active_pairs = [hp for hp in self.hedge_pairs if hp.status != 'closed']
+                if active_pairs:
+                    logger.info(f"Active hedge pairs: {len(active_pairs)}")
+                    for pair in active_pairs:
+                        logger.info(f"  {pair.symbol}: {pair.status}")
+                
                 # Rotate to next batch
                 symbol_rotation += 1
                 
@@ -567,6 +881,35 @@ class TradingBot:
         self.update_symbol_list()
         logger.info(f"Trading {len(self.config.symbols)} symbols: {', '.join(self.config.symbols[:10])}{'...' if len(self.config.symbols) > 10 else ''}")
         
+        # Send Telegram bot ready notification with symbol information
+        if self.telegram_enabled and TELEGRAM_ENHANCED_AVAILABLE:
+            try:
+                # Create and run async task in new loop if needed
+                try:
+                    loop = asyncio.get_event_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                
+                if loop.is_running():
+                    # If loop is running, create task
+                    asyncio.create_task(send_bot_ready_notification(len(self.config.symbols), self.config.symbols))
+                else:
+                    # If no loop is running, run until complete
+                    loop.run_until_complete(send_bot_ready_notification(len(self.config.symbols), self.config.symbols))
+                
+                logger.info("Telegram bot ready notification sent")
+            except Exception as e:
+                logger.error(f"Error sending Telegram bot ready notification: {e}")
+        elif self.telegram_enabled:
+            # Fallback to basic status notification
+            try:
+                open_trades = len([t for t in self.trades if t.status == 'open'])
+                total_pnl = sum(t.pnl for t in self.trades if t.pnl and t.status == 'closed')
+                asyncio.create_task(send_bot_status_notification("running", self.balance, open_trades, total_pnl))
+            except Exception as e:
+                logger.error(f"Error sending Telegram start notification: {e}")
+        
         # Run strategy in separate thread
         strategy_thread = threading.Thread(target=self.run_strategy)
         strategy_thread.daemon = True
@@ -576,6 +919,36 @@ class TradingBot:
         """Stop the trading bot"""
         self.is_running = False
         logger.info("Stopping trading bot...")
+        
+        # Send enhanced Telegram stop notification with final statistics
+        if self.telegram_enabled and TELEGRAM_ENHANCED_AVAILABLE:
+            try:
+                # Prepare final statistics
+                open_trades = [t for t in self.trades if t.status == 'open']
+                closed_trades = [t for t in self.trades if t.status == 'closed']
+                total_pnl = sum(t.pnl for t in closed_trades if t.pnl)
+                total_return = (total_pnl / self.config.initial_balance) * 100 if total_pnl else 0
+                
+                final_stats = {
+                    'total_trades': len(self.trades),
+                    'open_trades': len(open_trades),
+                    'closed_trades': len(closed_trades),
+                    'total_pnl': total_pnl,
+                    'total_return_pct': total_return
+                }
+                
+                asyncio.create_task(send_bot_stopped_notification(final_stats))
+                logger.info("Telegram bot stopped notification sent")
+            except Exception as e:
+                logger.error(f"Error sending Telegram stop notification: {e}")
+        elif self.telegram_enabled:
+            # Fallback to basic status notification
+            try:
+                open_trades = len([t for t in self.trades if t.status == 'open'])
+                total_pnl = sum(t.pnl for t in self.trades if t.pnl and t.status == 'closed')
+                asyncio.create_task(send_bot_status_notification("stopped", self.balance, open_trades, total_pnl))
+            except Exception as e:
+                logger.error(f"Error sending Telegram stop notification: {e}")
     
     def get_portfolio_summary(self) -> Dict:
         """Get portfolio summary"""

@@ -46,6 +46,18 @@
             padding: 10px;
             background: white;
         }
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+        .trade-details {
+            max-width: 200px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .reason-cell {
+            min-width: 150px;
+            max-width: 200px;
+        }
     </style>
 </head>
 <body>
@@ -55,7 +67,8 @@
             <div class="d-flex">
                 <button id="startBot" class="btn btn-success me-2">Start Bot</button>
                 <button id="stopBot" class="btn btn-danger me-2">Stop Bot</button>
-                <button id="refreshData" class="btn btn-outline-light">Refresh</button>
+                <button id="refreshData" class="btn btn-outline-light me-2">Refresh</button>
+                <a href="/logout" class="btn btn-outline-warning">Logout</a>
             </div>
         </div>
     </nav>
@@ -172,7 +185,9 @@
                                         <th>P&L</th>
                                         <th>P&L %</th>
                                         <th>Status</th>
-                                        <th>Signal</th>
+                                        <th>Entry Reason</th>
+                                        <th>Exit Reason</th>
+                                        <th>Market Conditions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -438,6 +453,11 @@
                     '<span class="badge bg-primary">Open</span>' : 
                     '<span class="badge bg-secondary">Closed</span>';
 
+                // Format entry reason with technical indicators
+                const entryReason = this.formatTradeReason(trade.entry_reason, trade.technical_indicators);
+                const exitReason = trade.exit_reason ? this.formatTradeReason(trade.exit_reason) : '-';
+                const marketConditions = trade.market_conditions ? this.formatMarketConditions(trade.market_conditions) : '-';
+
                 return `
                     <tr class="trade-row">
                         <td>${entryTime}</td>
@@ -449,9 +469,40 @@
                         <td class="${pnlClass}">${pnl === '-' ? '-' : '$' + pnl}</td>
                         <td class="${pnlClass}">${pnlPct}</td>
                         <td>${statusBadge}</td>
-                        <td><small>${trade.entry_signal}</small></td>
+                        <td class="reason-cell"><small class="text-info">${entryReason}</small></td>
+                        <td class="reason-cell"><small class="text-warning">${exitReason}</small></td>
+                        <td class="reason-cell"><small class="text-muted">${marketConditions}</small></td>
                     </tr>
                 `;
+            }
+
+            formatTradeReason(reason, technicalIndicators = null) {
+                if (!reason) return '-';
+                
+                let formatted = reason;
+                if (technicalIndicators) {
+                    const indicators = [];
+                    if (technicalIndicators.rsi) indicators.push(`RSI: ${technicalIndicators.rsi.toFixed(1)}`);
+                    if (technicalIndicators.sma_fast) indicators.push(`SMA Fast: ${technicalIndicators.sma_fast.toFixed(4)}`);
+                    if (technicalIndicators.sma_slow) indicators.push(`SMA Slow: ${technicalIndicators.sma_slow.toFixed(4)}`);
+                    if (technicalIndicators.macd_signal) indicators.push(`MACD: ${technicalIndicators.macd_signal}`);
+                    
+                    if (indicators.length > 0) {
+                        formatted += `<br><span class="text-primary">[${indicators.join(', ')}]</span>`;
+                    }
+                }
+                return formatted;
+            }
+
+            formatMarketConditions(conditions) {
+                if (!conditions) return '-';
+                
+                const formatted = [];
+                if (conditions.trend) formatted.push(`Trend: ${conditions.trend}`);
+                if (conditions.volatility) formatted.push(`Vol: ${conditions.volatility}`);
+                if (conditions.volume_profile) formatted.push(`Volume: ${conditions.volume_profile}`);
+                
+                return formatted.join(', ') || '-';
             }
 
             async loadChart(symbol) {
@@ -461,8 +512,13 @@
                 }
 
                 try {
+                    console.log(`Loading chart for symbol: ${symbol}`);
                     const response = await fetch(`/api/chart/${encodeURIComponent(symbol)}`);
+                    console.log('Response status:', response.status);
+                    
                     const data = await response.json();
+                    console.log('Chart data received:', data);
+                    console.log('Data size:', JSON.stringify(data).length, 'characters');
                     
                     if (data.error) {
                         this.showAlert(data.error, 'warning');
@@ -480,17 +536,43 @@
             }
 
             updateChartDisplay() {
-                if (!this.currentChartData) return;
+                if (!this.currentChartData) {
+                    console.log('No chart data available');
+                    return;
+                }
                 
                 const chartType = $('#chartType').val();
                 const data = this.currentChartData;
                 
+                console.log('Chart type:', chartType);
+                console.log('Available data keys:', Object.keys(data));
+                console.log('Price chart available:', !!data.price_chart);
+                console.log('Indicator chart available:', !!data.indicator_chart);
+                
                 if (chartType === 'candlestick' && data.price_chart) {
-                    const priceChart = JSON.parse(data.price_chart);
-                    Plotly.newPlot('mainChart', priceChart.data, priceChart.layout, {responsive: true});
+                    try {
+                        console.log('Attempting to parse price chart...');
+                        const priceChart = JSON.parse(data.price_chart);
+                        console.log('Price chart parsed successfully:', priceChart);
+                        console.log('Chart data length:', priceChart.data ? priceChart.data.length : 'No data array');
+                        Plotly.newPlot('mainChart', priceChart.data, priceChart.layout, {responsive: true});
+                        console.log('Price chart plotted successfully');
+                    } catch (error) {
+                        console.error('Error parsing/plotting price chart:', error);
+                    }
                 } else if (chartType === 'indicators' && data.indicator_chart) {
-                    const indicatorChart = JSON.parse(data.indicator_chart);
-                    Plotly.newPlot('mainChart', indicatorChart.data, indicatorChart.layout, {responsive: true});
+                    try {
+                        console.log('Attempting to parse indicator chart...');
+                        const indicatorChart = JSON.parse(data.indicator_chart);
+                        console.log('Indicator chart parsed successfully:', indicatorChart);
+                        console.log('Chart data length:', indicatorChart.data ? indicatorChart.data.length : 'No data array');
+                        Plotly.newPlot('mainChart', indicatorChart.data, indicatorChart.layout, {responsive: true});
+                        console.log('Indicator chart plotted successfully');
+                    } catch (error) {
+                        console.error('Error parsing/plotting indicator chart:', error);
+                    }
+                } else {
+                    console.log('No matching chart type or data available');
                 }
             }
 

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chart Test</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #chart { width: 100%; height: 600px; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Trading Bot Chart Test</h1>
+    <div class="info">
+        <strong>Chart Configuration:</strong>
+        <ul>
+            <li>✅ Moving averages removed (they were showing as straight lines)</li>
+            <li>✅ Only candlesticks and buy/sell signals displayed</li>
+            <li>✅ Enhanced signal markers (larger, more visible)</li>
+            <li>✅ Volume bars in separate subplot</li>
+        </ul>
+    </div>
+    
+    <div id="chart"></div>
+    <div id="status">Loading chart...</div>
+
+    <script>
+        // Test if we can fetch chart data
+        async function loadChart() {
+            try {
+                const response = await fetch('/api/chart/BTC/USDT');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const chartData = await response.json();
+                
+                if (chartData.error) {
+                    document.getElementById('status').innerHTML = `❌ Error: ${chartData.error}`;
+                    return;
+                }
+                
+                // Parse the chart data
+                const figData = JSON.parse(chartData);
+                
+                // Display the chart
+                Plotly.newPlot('chart', figData.data, figData.layout, {responsive: true});
+                
+                document.getElementById('status').innerHTML = '✅ Chart loaded successfully!';
+                
+                // Count traces
+                let candlestickCount = 0;
+                let signalCount = 0;
+                let volumeCount = 0;
+                
+                figData.data.forEach(trace => {
+                    if (trace.type === 'candlestick') candlestickCount++;
+                    if (trace.name && (trace.name.includes('Buy') || trace.name.includes('Sell'))) signalCount++;
+                    if (trace.name === 'Volume') volumeCount++;
+                });
+                
+                document.getElementById('status').innerHTML += `<br>
+                    📊 Chart Analysis:<br>
+                    - Candlestick traces: ${candlestickCount}<br>
+                    - Signal traces: ${signalCount}<br>
+                    - Volume traces: ${volumeCount}<br>
+                    - Total traces: ${figData.data.length}`;
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = `❌ Failed to load chart: ${error.message}`;
+                console.error('Chart loading error:', error);
+            }
+        }
+        
+        // Load chart when page loads
+        window.addEventListener('load', loadChart);
+    </script>
+</body>
+</html>
