@@ -13,7 +13,7 @@ TIMEFRAME = "5m"
 
 # Hedging Strategy Configuration
 INITIAL_TRADE_SIZE = 30.0  # Initial trade allocation per pair
-LONG_POSITION_SIZE = 5.0  # Size of initial long position
+LONG_POSITION_SIZE = 6.0  # Size of initial long position (increased from 5.0)
 SHORT_POSITION_SIZE = 10.0  # Size of hedge short position
 HEDGE_TRIGGER_LOSS = -0.05  # -5% loss triggers hedge position
 ONE_TRADE_PER_PAIR = True  # Only allow one active trade pair at a time

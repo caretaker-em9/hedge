@@ -232,6 +232,26 @@ class TradingBot:
         # Initialize exchange
         self._init_exchange()
     
+    def _run_async_telegram_task(self, coro):
+        """Helper function to run async Telegram tasks safely"""
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If loop is running, schedule the task
+                asyncio.create_task(coro)
+            else:
+                # If no loop is running, create new one
+                loop.run_until_complete(coro)
+        except RuntimeError:
+            # If no event loop, create a new one
+            try:
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                new_loop.run_until_complete(coro)
+                new_loop.close()
+            except Exception as e:
+                logger.error(f"Error running async Telegram task: {e}")
+    
     def _init_exchange(self):
         """Initialize CCXT exchange connection"""
         try:
@@ -506,8 +526,10 @@ class TradingBot:
                          trade_type: str = 'normal', pair_id: Optional[str] = None) -> Optional[Trade]:
         """Execute a single position (long or short) with detailed reasons"""
         try:
-            # Calculate position size with leverage
-            position_size = size * self.config.leverage
+            # Calculate position size in base currency (not multiplied by leverage)
+            # The size parameter already represents the USD amount we want to trade
+            # CCXT will handle leverage automatically when we set the leverage parameter
+            position_size = size / analysis['price']  # Convert USD amount to base currency amount
             
             # Create detailed entry reason based on trade type
             if trade_type == 'long':
@@ -560,8 +582,8 @@ class TradingBot:
                     trade_dict['timestamp'] = trade.timestamp.timestamp()
                     trade_dict['market_conditions'] = {'description': market_conditions}
                     
-                    # Send notification asynchronously
-                    asyncio.create_task(send_trade_entry_notification(trade_dict))
+                    # Send notification using helper function
+                    self._run_async_telegram_task(send_trade_entry_notification(trade_dict))
                 except Exception as e:
                     logger.error(f"Error sending Telegram entry notification: {e}")
             
@@ -737,18 +759,18 @@ class TradingBot:
                         long_dict['timestamp'] = hedge_pair.long_trade.timestamp.timestamp()
                         if hedge_pair.long_trade.exit_timestamp:
                             long_dict['exit_timestamp'] = hedge_pair.long_trade.exit_timestamp.timestamp()
-                        asyncio.create_task(send_trade_exit_notification(long_dict))
+                        self._run_async_telegram_task(send_trade_exit_notification(long_dict))
                     
                     if hedge_pair.short_trade:
                         short_dict = asdict(hedge_pair.short_trade)
                         short_dict['timestamp'] = hedge_pair.short_trade.timestamp.timestamp()
                         if hedge_pair.short_trade.exit_timestamp:
                             short_dict['exit_timestamp'] = hedge_pair.short_trade.exit_timestamp.timestamp()
-                        asyncio.create_task(send_trade_exit_notification(short_dict))
+                        self._run_async_telegram_task(send_trade_exit_notification(short_dict))
                     
                     # Send hedge completion summary
                     if hedge_pair.long_trade and hedge_pair.short_trade:
-                        asyncio.create_task(send_hedge_completion_notification(
+                        self._run_async_telegram_task(send_hedge_completion_notification(
                             asdict(hedge_pair.long_trade), 
                             asdict(hedge_pair.short_trade), 
                             total_pnl
@@ -884,20 +906,7 @@ class TradingBot:
         # Send Telegram bot ready notification with symbol information
         if self.telegram_enabled and TELEGRAM_ENHANCED_AVAILABLE:
             try:
-                # Create and run async task in new loop if needed
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                
-                if loop.is_running():
-                    # If loop is running, create task
-                    asyncio.create_task(send_bot_ready_notification(len(self.config.symbols), self.config.symbols))
-                else:
-                    # If no loop is running, run until complete
-                    loop.run_until_complete(send_bot_ready_notification(len(self.config.symbols), self.config.symbols))
-                
+                self._run_async_telegram_task(send_bot_ready_notification(len(self.config.symbols), self.config.symbols))
                 logger.info("Telegram bot ready notification sent")
             except Exception as e:
                 logger.error(f"Error sending Telegram bot ready notification: {e}")
@@ -906,7 +915,7 @@ class TradingBot:
             try:
                 open_trades = len([t for t in self.trades if t.status == 'open'])
                 total_pnl = sum(t.pnl for t in self.trades if t.pnl and t.status == 'closed')
-                asyncio.create_task(send_bot_status_notification("running", self.balance, open_trades, total_pnl))
+                self._run_async_telegram_task(send_bot_status_notification("running", self.balance, open_trades, total_pnl))
             except Exception as e:
                 logger.error(f"Error sending Telegram start notification: {e}")
         
@@ -937,7 +946,7 @@ class TradingBot:
                     'total_return_pct': total_return
                 }
                 
-                asyncio.create_task(send_bot_stopped_notification(final_stats))
+                self._run_async_telegram_task(send_bot_stopped_notification(final_stats))
                 logger.info("Telegram bot stopped notification sent")
             except Exception as e:
                 logger.error(f"Error sending Telegram stop notification: {e}")
@@ -946,7 +955,7 @@ class TradingBot:
             try:
                 open_trades = len([t for t in self.trades if t.status == 'open'])
                 total_pnl = sum(t.pnl for t in self.trades if t.pnl and t.status == 'closed')
-                asyncio.create_task(send_bot_status_notification("stopped", self.balance, open_trades, total_pnl))
+                self._run_async_telegram_task(send_bot_status_notification("stopped", self.balance, open_trades, total_pnl))
             except Exception as e:
                 logger.error(f"Error sending Telegram stop notification: {e}")
     
