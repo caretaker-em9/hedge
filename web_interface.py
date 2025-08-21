@@ -593,7 +593,7 @@ def stop_bot():
 @app.route('/api/trades')
 @login_required
 def get_trades():
-    """Get all trades with detailed entry/exit reasons"""
+    """Get all trades with detailed entry/exit reasons and current P&L for open positions"""
     if not bot:
         return jsonify([])
     
@@ -618,9 +618,50 @@ def get_trades():
             # Detailed reasons
             'entry_reason': getattr(trade, 'entry_reason', 'Standard entry'),
             'exit_reason': getattr(trade, 'exit_reason', None),
-            'technical_indicators': getattr(trade, 'technical_indicators', {}),
-            'market_conditions': getattr(trade, 'market_conditions', 'Normal conditions')
         }
+        
+        # Add current price and unrealized P&L for open positions
+        if trade.status == 'open':
+            try:
+                current_price = bot._get_current_price(trade.symbol)
+                if current_price:
+                    trade_dict['current_price'] = current_price
+                    price_diff = current_price - trade.price
+                    current_pnl = price_diff * trade.amount
+                    current_pnl_percentage = (price_diff / trade.price) * 100 * bot.config.leverage
+                    
+                    trade_dict['current_pnl'] = current_pnl
+                    trade_dict['current_pnl_percentage'] = current_pnl_percentage
+                    
+                    # Calculate time in trade and ROI threshold if applicable
+                    time_diff = (datetime.now() - trade.timestamp).total_seconds() / 60
+                    trade_dict['time_in_trade_minutes'] = time_diff
+                    
+                    if trade.trade_type == 'normal':
+                        roi_threshold = bot._get_roi_threshold(time_diff)
+                        trade_dict['roi_threshold'] = roi_threshold
+                        trade_dict['roi_threshold_percentage'] = roi_threshold * 100
+                        
+                        # Check if close to ROI exit
+                        profit_pct = price_diff / trade.price
+                        trade_dict['close_to_roi_exit'] = profit_pct >= (roi_threshold * 0.8)  # Within 80% of ROI threshold
+                        
+                        # Add trailing stop information
+                        if hasattr(trade, 'max_price') and trade.max_price:
+                            trade_dict['max_price'] = trade.max_price
+                            trade_dict['max_profit_percentage'] = ((trade.max_price - trade.price) / trade.price) * 100
+                            
+                        if hasattr(trade, 'trailing_stop_price') and trade.trailing_stop_price:
+                            trade_dict['trailing_stop_price'] = trade.trailing_stop_price
+                            trade_dict['trailing_stop_distance'] = ((current_price - trade.trailing_stop_price) / current_price) * 100
+                        
+            except Exception as e:
+                logger.error(f"Error getting current price for {trade.symbol}: {e}")
+        
+        # Add additional trade metadata
+        trade_dict['technical_indicators'] = getattr(trade, 'technical_indicators', {})
+        trade_dict['market_conditions'] = getattr(trade, 'market_conditions', 'Normal conditions')
+        
         trades_data.append(trade_dict)
     
     return jsonify(trades_data)

@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-08-21T18:01:58.878511",
+  "initial": {
+    "orders": 1,
+    "positions": 2,
+    "pnl": 7.257701259999999
+  },
+  "final": {
+    "orders": 0,
+    "positions": 1
+  },
+  "success": false
+}

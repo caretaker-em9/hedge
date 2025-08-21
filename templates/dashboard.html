@@ -49,6 +49,24 @@
         .table-responsive {
             font-size: 0.9rem;
         }
+        .table-info {
+            background-color: rgba(13, 202, 240, 0.1) !important;
+        }
+        .roi-warning {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .current-price {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .unrealized-pnl {
+            font-style: italic;
+        }
         .trade-details {
             max-width: 200px;
             white-space: normal;
@@ -181,10 +199,11 @@
                                         <th>Side</th>
                                         <th>Amount</th>
                                         <th>Entry Price</th>
-                                        <th>Exit Price</th>
+                                        <th>Current/Exit Price</th>
                                         <th>P&L</th>
                                         <th>P&L %</th>
                                         <th>Status</th>
+                                        <th>ROI Info</th>
                                         <th>Entry Reason</th>
                                         <th>Exit Reason</th>
                                         <th>Market Conditions</th>
@@ -444,11 +463,69 @@
             createTradeRow(trade) {
                 const entryTime = new Date(trade.timestamp).toLocaleString();
                 const exitTime = trade.exit_timestamp ? new Date(trade.exit_timestamp).toLocaleString() : '-';
-                const exitPrice = trade.exit_price ? trade.exit_price.toFixed(4) : '-';
-                const pnl = trade.pnl ? trade.pnl.toFixed(2) : '-';
-                const pnlPct = trade.pnl_percentage ? trade.pnl_percentage.toFixed(2) + '%' : '-';
                 
-                const pnlClass = trade.pnl > 0 ? 'profit' : trade.pnl < 0 ? 'loss' : '';
+                // Handle current vs exit price display
+                let priceDisplay = '';
+                let pnlDisplay = '';
+                let pnlPctDisplay = '';
+                let pnlClass = '';
+                let roiInfo = '';
+                
+                if (trade.status === 'open') {
+                    // Show current price and unrealized P&L
+                    const currentPrice = trade.current_price ? trade.current_price.toFixed(4) : 'Loading...';
+                    priceDisplay = `<span class="text-primary">$${currentPrice}</span>`;
+                    
+                    if (trade.current_pnl !== undefined) {
+                        const currentPnl = trade.current_pnl.toFixed(2);
+                        const currentPnlPct = trade.current_pnl_percentage ? trade.current_pnl_percentage.toFixed(2) : '0.00';
+                        pnlClass = trade.current_pnl > 0 ? 'profit' : trade.current_pnl < 0 ? 'loss' : '';
+                        pnlDisplay = `<span class="text-warning">$${currentPnl}</span>`;
+                        pnlPctDisplay = `<span class="text-warning">${currentPnlPct}%</span>`;
+                    }
+                    
+                    // ROI information for normal trades
+                    if (trade.trade_type === 'normal' && trade.roi_threshold !== undefined) {
+                        const timeInTrade = Math.floor(trade.time_in_trade_minutes || 0);
+                        const roiThreshold = (trade.roi_threshold_percentage || 0).toFixed(1);
+                        const isCloseToRoi = trade.close_to_roi_exit;
+                        const roiClass = isCloseToRoi ? 'text-warning' : 'text-muted';
+                        
+                        let roiText = `${timeInTrade}m | ${roiThreshold}% ROI`;
+                        
+                        // Add trailing stop info if available
+                        if (trade.trailing_stop_price) {
+                            const trailingDistance = (trade.trailing_stop_distance || 0).toFixed(1);
+                            roiText += `<br><small class="text-info">Trail: ${trailingDistance}%</small>`;
+                        }
+                        
+                        if (trade.max_price) {
+                            const maxProfit = (trade.max_profit_percentage || 0).toFixed(1);
+                            roiText += `<br><small class="text-success">Max: +${maxProfit}%</small>`;
+                        }
+                        
+                        roiInfo = `<small class="${roiClass}">
+                            ${roiText}
+                            ${isCloseToRoi ? '<br><strong>⚠️ Near ROI Exit</strong>' : ''}
+                        </small>`;
+                    } else if (trade.trade_type === 'hedge') {
+                        roiInfo = '<small class="text-info">Hedge Position</small>';
+                    } else {
+                        roiInfo = '<small class="text-muted">-</small>';
+                    }
+                } else {
+                    // Show exit price and realized P&L
+                    const exitPrice = trade.exit_price ? trade.exit_price.toFixed(4) : '-';
+                    priceDisplay = exitPrice === '-' ? '-' : `$${exitPrice}`;
+                    
+                    const pnl = trade.pnl ? trade.pnl.toFixed(2) : '-';
+                    const pnlPct = trade.pnl_percentage ? trade.pnl_percentage.toFixed(2) + '%' : '-';
+                    pnlClass = trade.pnl > 0 ? 'profit' : trade.pnl < 0 ? 'loss' : '';
+                    pnlDisplay = pnl === '-' ? '-' : `$${pnl}`;
+                    pnlPctDisplay = pnlPct;
+                    roiInfo = '<small class="text-muted">Closed</small>';
+                }
+
                 const statusBadge = trade.status === 'open' ? 
                     '<span class="badge bg-primary">Open</span>' : 
                     '<span class="badge bg-secondary">Closed</span>';
@@ -459,16 +536,17 @@
                 const marketConditions = trade.market_conditions ? this.formatMarketConditions(trade.market_conditions) : '-';
 
                 return `
-                    <tr class="trade-row">
+                    <tr class="trade-row ${trade.status === 'open' ? 'table-info' : ''}">
                         <td>${entryTime}</td>
-                        <td>${trade.symbol}</td>
+                        <td><strong>${trade.symbol}</strong></td>
                         <td><span class="badge bg-${trade.side === 'buy' ? 'success' : 'danger'}">${trade.side.toUpperCase()}</span></td>
                         <td>${trade.amount.toFixed(6)}</td>
                         <td>$${trade.price.toFixed(4)}</td>
-                        <td>${exitPrice === '-' ? '-' : '$' + exitPrice}</td>
-                        <td class="${pnlClass}">${pnl === '-' ? '-' : '$' + pnl}</td>
-                        <td class="${pnlClass}">${pnlPct}</td>
+                        <td>${priceDisplay}</td>
+                        <td class="${pnlClass}">${pnlDisplay}</td>
+                        <td class="${pnlClass}">${pnlPctDisplay}</td>
                         <td>${statusBadge}</td>
+                        <td>${roiInfo}</td>
                         <td class="reason-cell"><small class="text-info">${entryReason}</small></td>
                         <td class="reason-cell"><small class="text-warning">${exitReason}</small></td>
                         <td class="reason-cell"><small class="text-muted">${marketConditions}</small></td>

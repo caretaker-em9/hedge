@@ -7,7 +7,7 @@ BINANCE_TESTNET_SECRET = "107d36fde411bbf834f5d86a9de3e7df2baf9476e00cfd38558b35
 
 # Trading Configuration
 INITIAL_BALANCE = 30.0
-MAX_TRADES = 2
+MAX_TRADES = 5  # Increased from 2 to allow more concurrent trades
 LEVERAGE = 10.0
 TIMEFRAME = "5m"
 
@@ -16,7 +16,7 @@ INITIAL_TRADE_SIZE = 30.0  # Initial trade allocation per pair
 LONG_POSITION_SIZE = 6.0  # Size of initial long position (increased from 5.0)
 SHORT_POSITION_SIZE = 10.0  # Size of hedge short position
 HEDGE_TRIGGER_LOSS = -0.05  # -5% loss triggers hedge position
-ONE_TRADE_PER_PAIR = True  # Only allow one active trade pair at a time
+ONE_TRADE_PER_PAIR = False  # Allow multiple trades per pair for testing
 
 # Symbol Selection Configuration
 MAX_SYMBOLS = 100  # Maximum number of symbols to trade
@@ -36,6 +36,28 @@ STRATEGY_PARAMS = {
     "fast_ewo": 50,
     "slow_ewo": 200,
     "stoploss": -0.189
+}
+
+# ROI Configuration (Freqtrade style)
+MINIMAL_ROI = {
+    "0": 0.70,    # 70% ROI (exit immediately if profit hits 70%)
+    "1": 0.65,    # 65% ROI after 1 minute
+    "2": 0.60,    # 60% ROI after 2 minutes
+    "3": 0.55,    # 55% ROI after 3 minutes
+    "4": 0.50,    # 50% ROI after 4 minutes
+    "5": 0.45,    # 45% ROI after 5 minutes
+    "6": 0.40,    # 40% ROI after 6 minutes
+    "7": 0.35,    # 35% ROI after 7 minutes
+    "8": 0.30,    # 30% ROI after 8 minutes
+    "9": 0.25,    # 25% ROI after 9 minutes
+    "10": 0.20,   # 20% ROI after 10 minutes
+    "15": 0.15,   # 15% ROI after 15 minutes
+    "20": 0.10,   # 10% ROI after 20 minutes
+    "30": 0.07,   # 7% ROI after 30 minutes
+    "45": 0.05,   # 5% ROI after 45 minutes
+    "60": 0.03,   # 3% ROI after 60 minutes
+    "90": 0.01,   # 1% ROI after 90 minutes
+    "120": 0      # Exit after 120 minutes (2 hours)
 }
 
 # Symbols to trade (fallback list if volume filtering fails)
@@ -58,7 +80,7 @@ TRADING_SYMBOLS = [
 
 # Risk Management
 RISK_PER_TRADE = 0.30  # 30% of balance for hedging strategy (initial trade size)
-TRAILING_STOP = False  # Disable trailing stops for hedging strategy
+TRAILING_STOP = True  # Disable trailing stops for hedging strategy
 TRAILING_STOP_POSITIVE = 0.005
 TRAILING_STOP_POSITIVE_OFFSET = 0.03
 

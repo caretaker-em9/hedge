@@ -68,6 +68,10 @@ class Trade:
     exit_reason: Optional[str] = None   # Detailed exit analysis
     technical_indicators: Optional[Dict] = None  # Technical indicator values at entry
     market_conditions: Optional[str] = None  # Market condition description
+    
+    # Trailing stop data
+    max_price: Optional[float] = None  # Highest price reached (for trailing stop)
+    trailing_stop_price: Optional[float] = None  # Current trailing stop price
 
 @dataclass
 class HedgePair:
@@ -124,12 +128,43 @@ class BotConfig:
     exit_when_hedged: bool = True
     min_hedge_profit_ratio: float = 1.0
     
+    # ROI configuration
+    minimal_roi: Dict[str, float] = None
+    
+    # Trailing stop configuration
+    trailing_stop: bool = False
+    trailing_stop_positive: float = 0.005
+    trailing_stop_positive_offset: float = 0.03
+    
     def __post_init__(self):
         if self.symbols is None:
             self.symbols = [
                 'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT', 'SOL/USDT',
                 'XRP/USDT', 'DOGE/USDT', 'DOT/USDT', 'AVAX/USDT', 'LUNA/USDT'
             ]
+        
+        # Set default ROI if not provided
+        if self.minimal_roi is None:
+            self.minimal_roi = {
+                "0": 0.70,    # 70% ROI (exit immediately if profit hits 70%)
+                "1": 0.65,    # 65% ROI after 1 minute
+                "2": 0.60,    # 60% ROI after 2 minutes
+                "3": 0.55,    # 55% ROI after 3 minutes
+                "4": 0.50,    # 50% ROI after 4 minutes
+                "5": 0.45,    # 45% ROI after 5 minutes
+                "6": 0.40,    # 40% ROI after 6 minutes
+                "7": 0.35,    # 35% ROI after 7 minutes
+                "8": 0.30,    # 30% ROI after 8 minutes
+                "9": 0.25,    # 25% ROI after 9 minutes
+                "10": 0.20,   # 20% ROI after 10 minutes
+                "15": 0.15,   # 15% ROI after 15 minutes
+                "20": 0.10,   # 10% ROI after 20 minutes
+                "30": 0.07,   # 7% ROI after 30 minutes
+                "45": 0.05,   # 5% ROI after 45 minutes
+                "60": 0.03,   # 3% ROI after 60 minutes
+                "90": 0.01,   # 1% ROI after 90 minutes
+                "120": 0      # Exit after 120 minutes (2 hours)
+            }
 
 def EWO(dataframe: pd.DataFrame, ema_length: int = 5, ema2_length: int = 35) -> pd.Series:
     """Elliott Wave Oscillator"""
@@ -227,7 +262,7 @@ class TradingBot:
         self.balance = config.initial_balance
         self.is_running = False
         self.data_cache = {}
-        self.telegram_enabled = TELEGRAM_AVAILABLE and getattr(config, 'telegram_enabled', False)
+        self.telegram_enabled = TELEGRAM_AVAILABLE and getattr(config, 'TELEGRAM_ENABLED', False)
         
         # Initialize exchange
         self._init_exchange()
@@ -284,6 +319,65 @@ class TradingBot:
             # Test connection
             balance = self.exchange.fetch_balance()
             logger.info("Successfully connected to Binance Testnet")
+            
+            # Configure margin mode and leverage for trading symbols
+            self._configure_margin_and_leverage()
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize exchange: {e}")
+            # For demo purposes, create a mock exchange
+            self.exchange = self._create_mock_exchange()
+    
+    def _configure_margin_and_leverage(self):
+        """Configure isolated margin mode and leverage for all trading symbols"""
+        try:
+            for symbol in self.config.symbols[:10]:  # Configure first 10 symbols to avoid rate limits
+                try:
+                    # Set margin mode to ISOLATED
+                    self.exchange.set_margin_mode('isolated', symbol)
+                    logger.info(f"Set {symbol} to isolated margin mode")
+                    
+                    # Set leverage
+                    self.exchange.set_leverage(self.config.leverage, symbol)
+                    logger.info(f"Set {symbol} leverage to {self.config.leverage}x")
+                    
+                except Exception as e:
+                    logger.warning(f"Could not configure {symbol}: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Error configuring margin and leverage: {e}")
+    
+    def verify_symbol_configuration(self, symbol: str) -> bool:
+        """Verify that a symbol is properly configured with isolated margin and correct leverage"""
+        try:
+            # Check current leverage setting
+            positions = self.exchange.fetch_positions([symbol])
+            for position in positions:
+                if position['symbol'] == symbol:
+                    current_leverage = position.get('leverage', 0)
+                    margin_mode = position.get('marginMode', 'unknown')
+                    
+                    logger.info(f"{symbol} - Leverage: {current_leverage}x, Margin: {margin_mode}")
+                    
+                    if current_leverage != self.config.leverage:
+                        logger.warning(f"{symbol} leverage mismatch: expected {self.config.leverage}x, got {current_leverage}x")
+                        return False
+                        
+                    if margin_mode.lower() != 'isolated':
+                        logger.warning(f"{symbol} margin mode mismatch: expected isolated, got {margin_mode}")
+                        return False
+                        
+                    return True
+            
+            # If no position found, try to configure it
+            self.exchange.set_margin_mode('isolated', symbol)
+            self.exchange.set_leverage(self.config.leverage, symbol)
+            logger.info(f"Configured {symbol}: {self.config.leverage}x isolated margin")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error verifying {symbol} configuration: {e}")
+            return False
             
         except Exception as e:
             logger.error(f"Failed to initialize exchange: {e}")
@@ -526,10 +620,27 @@ class TradingBot:
                          trade_type: str = 'normal', pair_id: Optional[str] = None) -> Optional[Trade]:
         """Execute a single position (long or short) with detailed reasons"""
         try:
-            # Calculate position size in base currency (not multiplied by leverage)
-            # The size parameter already represents the USD amount we want to trade
-            # CCXT will handle leverage automatically when we set the leverage parameter
-            position_size = size / analysis['price']  # Convert USD amount to base currency amount
+            # Ensure margin mode and leverage are set for this symbol
+            if not self.verify_symbol_configuration(symbol):
+                logger.error(f"Failed to configure {symbol} properly")
+                return None
+            
+            # Calculate position size correctly:
+            # size = USD amount we want to trade (e.g., $6 for long, $10 for hedge)
+            # We need to convert this to the base currency amount WITHOUT multiplying by leverage
+            # The leverage will be applied automatically by the exchange
+            current_price = analysis['price']
+            position_size = size / current_price  # Convert USD to base currency amount
+            
+            # For futures with leverage, this gives us the notional size
+            # The exchange will apply leverage automatically
+            
+            logger.info(f"Executing {trade_type} {side} position:")
+            logger.info(f"  Symbol: {symbol}")
+            logger.info(f"  USD Size: ${size}")
+            logger.info(f"  Price: ${current_price}")
+            logger.info(f"  Base Currency Amount: {position_size}")
+            logger.info(f"  Leverage: {self.config.leverage}x (isolated)")
             
             # Create detailed entry reason based on trade type
             if trade_type == 'long':
@@ -542,18 +653,23 @@ class TradingBot:
                 entry_reason = "Standard entry based on strategy signals"
                 market_conditions = "Normal market conditions"
             
-            # Create order
+            # Create order with isolated margin and correct leverage
             order = self.exchange.create_market_order(
                 symbol, side, position_size,
-                params={'leverage': self.config.leverage}
+                params={
+                    'leverage': self.config.leverage,
+                    'marginMode': 'isolated'
+                }
             )
+            
+            logger.info(f"Order executed: {order['id']} - {side} {position_size} {symbol} at ${current_price}")
             
             trade = Trade(
                 id=order['id'],
                 symbol=symbol,
                 side=side,
                 amount=position_size,
-                price=analysis['price'],
+                price=current_price,
                 timestamp=datetime.now(),
                 status='open',
                 entry_signal=f"EWO: {analysis['ewo']:.2f}, RSI: {analysis['rsi']:.2f}",
@@ -584,8 +700,17 @@ class TradingBot:
                     
                     # Send notification using helper function
                     self._run_async_telegram_task(send_trade_entry_notification(trade_dict))
+                    
+                    # Also log the entry signal for debugging
+                    logger.info(f"📱 ENTRY SIGNAL: {trade.symbol} {trade.side} ${trade.amount:.2f} @ ${trade.price:.4f} - {entry_reason}")
+                    
                 except Exception as e:
                     logger.error(f"Error sending Telegram entry notification: {e}")
+                    # Log entry signal even if Telegram fails
+                    logger.warning(f"📱 ENTRY SIGNAL (Telegram failed): {trade.symbol} {trade.side} ${trade.amount:.2f} @ ${trade.price:.4f} - {entry_reason}")
+            else:
+                # Log entry signal when Telegram is disabled
+                logger.info(f"📱 ENTRY SIGNAL (Telegram disabled): {trade.symbol} {trade.side} ${trade.amount:.2f} @ ${trade.price:.4f} - {entry_reason}")
             
             return trade
             
@@ -724,7 +849,10 @@ class TradingBot:
             if hedge_pair.long_trade and hedge_pair.long_trade.status == 'open':
                 self.exchange.create_market_order(
                     hedge_pair.symbol, 'sell', hedge_pair.long_trade.amount,
-                    params={'leverage': self.config.leverage}
+                    params={
+                        'leverage': self.config.leverage,
+                        'marginMode': 'isolated'
+                    }
                 )
                 hedge_pair.long_trade.status = 'closed'
                 hedge_pair.long_trade.exit_price = current_price
@@ -737,7 +865,10 @@ class TradingBot:
             if hedge_pair.short_trade and hedge_pair.short_trade.status == 'open':
                 self.exchange.create_market_order(
                     hedge_pair.symbol, 'buy', hedge_pair.short_trade.amount,
-                    params={'leverage': self.config.leverage}
+                    params={
+                        'leverage': self.config.leverage,
+                        'marginMode': 'isolated'
+                    }
                 )
                 hedge_pair.short_trade.status = 'closed'
                 hedge_pair.short_trade.exit_price = current_price
@@ -820,8 +951,105 @@ class TradingBot:
                     
             except Exception as e:
                 logger.error(f"Error checking stop loss for {trade.symbol}: {e}")
+    
+    def check_roi_exit(self):
+        """Check and execute ROI exits for open non-hedge positions"""
+        # Only check ROI for trades that are not part of hedge pairs
+        open_trades = [t for t in self.trades if t.status == 'open' and t.trade_type == 'normal']
+        
+        for trade in open_trades:
+            try:
+                current_data = self.analyze_symbol(trade.symbol)
+                current_price = current_data['price']
+                
+                # Calculate current profit percentage
+                profit_pct = (current_price - trade.price) / trade.price
+                
+                # Calculate time since entry (in minutes)
+                time_diff = (datetime.now() - trade.timestamp).total_seconds() / 60
+                
+                # Check ROI table
+                roi_threshold = self._get_roi_threshold(time_diff)
+                
+                if profit_pct >= roi_threshold:
+                    # Execute ROI exit
+                    trade.status = 'closed'
+                    trade.exit_price = current_price
+                    trade.exit_timestamp = datetime.now()
+                    trade.exit_signal = f"ROI ({profit_pct:.1%} >= {roi_threshold:.1%})"
+                    
+                    price_diff = trade.exit_price - trade.price
+                    trade.pnl = price_diff * trade.amount
+                    trade.pnl_percentage = (price_diff / trade.price) * 100 * self.config.leverage
+                    
+                    self.balance += trade.pnl
+                    
+                    logger.info(f"ROI exit triggered: {trade.symbol} at {current_price:.2f} ({profit_pct:.1%})")
+                    
             except Exception as e:
-                logger.error(f"Error checking stop loss for {trade.symbol}: {e}")
+                logger.error(f"Error checking ROI for {trade.symbol}: {e}")
+    
+    def _get_roi_threshold(self, time_minutes: float) -> float:
+        """Get ROI threshold for given time"""
+        # Convert ROI table keys to integers and sort
+        roi_times = sorted([int(k) for k in self.config.minimal_roi.keys()])
+        
+        # Find the appropriate ROI threshold
+        for roi_time in roi_times:
+            if time_minutes >= roi_time:
+                roi_threshold = self.config.minimal_roi[str(roi_time)]
+            else:
+                break
+        else:
+            # If we've exceeded all time thresholds, use the last one
+            roi_threshold = self.config.minimal_roi[str(roi_times[-1])]
+        
+        return roi_threshold
+    
+    def check_trailing_stop(self):
+        """Check and execute trailing stop for open non-hedge positions"""
+        if not self.config.trailing_stop:
+            return
+            
+        # Only check trailing stop for trades that are not part of hedge pairs
+        open_trades = [t for t in self.trades if t.status == 'open' and t.trade_type == 'normal']
+        
+        for trade in open_trades:
+            try:
+                current_data = self.analyze_symbol(trade.symbol)
+                current_price = current_data['price']
+                
+                # Initialize max_price if not set
+                if trade.max_price is None:
+                    trade.max_price = max(trade.price, current_price)
+                
+                # Update max_price if current price is higher
+                if current_price > trade.max_price:
+                    trade.max_price = current_price
+                    
+                    # Calculate new trailing stop price
+                    if trade.max_price > trade.price * (1 + self.config.trailing_stop_positive_offset):
+                        # Only activate trailing stop when profit exceeds offset
+                        trade.trailing_stop_price = trade.max_price * (1 - self.config.trailing_stop_positive)
+                
+                # Check if trailing stop should trigger
+                if trade.trailing_stop_price and current_price <= trade.trailing_stop_price:
+                    # Execute trailing stop
+                    trade.status = 'closed'
+                    trade.exit_price = current_price
+                    trade.exit_timestamp = datetime.now()
+                    trade.exit_signal = f"Trailing Stop (Max: ${trade.max_price:.2f})"
+                    
+                    price_diff = trade.exit_price - trade.price
+                    trade.pnl = price_diff * trade.amount
+                    trade.pnl_percentage = (price_diff / trade.price) * 100 * self.config.leverage
+                    
+                    self.balance += trade.pnl
+                    
+                    logger.info(f"Trailing stop triggered: {trade.symbol} at {current_price:.2f} (Max was: {trade.max_price:.2f})")
+                    
+            except Exception as e:
+                logger.error(f"Error checking trailing stop for {trade.symbol}: {e}")
     
     def run_strategy(self):
         """Main strategy execution loop with hedging"""
@@ -835,6 +1063,12 @@ class TradingBot:
                 # Check hedge triggers and exits first
                 self.check_hedge_triggers()
                 self.check_hedge_exits()
+                
+                # Check ROI exits for profitable trades
+                self.check_roi_exit()
+                
+                # Check trailing stops if enabled
+                self.check_trailing_stop()
                 
                 # Check stop losses for any remaining non-hedge trades
                 self.check_stop_loss()

@@ -1,0 +1,2 @@
+2025-08-21 17:38:22,898 - INFO - Kill switch initialized successfully
+2025-08-21 17:38:25,205 - ERROR - Failed to get account summary: object dict can't be used in 'await' expression

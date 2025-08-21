@@ -64,6 +64,12 @@ def load_config():
             telegram_enabled=getattr(config, 'TELEGRAM_ENABLED', False),
             telegram_bot_token=getattr(config, 'TELEGRAM_BOT_TOKEN', ''),
             telegram_chat_id=getattr(config, 'TELEGRAM_CHAT_ID', ''),
+            # ROI configuration
+            minimal_roi=getattr(config, 'MINIMAL_ROI', None),
+            # Trailing stop configuration
+            trailing_stop=getattr(config, 'TRAILING_STOP', False),
+            trailing_stop_positive=getattr(config, 'TRAILING_STOP_POSITIVE', 0.005),
+            trailing_stop_positive_offset=getattr(config, 'TRAILING_STOP_POSITIVE_OFFSET', 0.03),
             **config.STRATEGY_PARAMS
         )
         
