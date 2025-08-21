@@ -337,9 +337,23 @@ class TradingBot:
                     self.exchange.set_margin_mode('isolated', symbol)
                     logger.info(f"Set {symbol} to isolated margin mode")
                     
-                    # Set leverage
-                    self.exchange.set_leverage(self.config.leverage, symbol)
-                    logger.info(f"Set {symbol} leverage to {self.config.leverage}x")
+                    # Set leverage using Binance futures API format
+                    symbol_raw = symbol.replace('/', '')  # Remove slash for Binance API
+                    try:
+                        leverage_result = self.exchange.fapiPrivate_post_leverage({
+                            'symbol': symbol_raw,
+                            'leverage': int(self.config.leverage)
+                        })
+                        logger.info(f"Set {symbol} leverage to {self.config.leverage}x: {leverage_result}")
+                    except Exception as leverage_error:
+                        # Fallback to CCXT method
+                        logger.warning(f"Direct API failed for {symbol}, trying CCXT method: {leverage_error}")
+                        try:
+                            self.exchange.set_leverage(int(self.config.leverage), symbol)
+                            logger.info(f"Set {symbol} leverage to {self.config.leverage}x via CCXT")
+                        except Exception as ccxt_error:
+                            logger.error(f"Both leverage methods failed for {symbol}: {ccxt_error}")
+                            raise ccxt_error
                     
                 except Exception as e:
                     logger.warning(f"Could not configure {symbol}: {e}")
@@ -371,8 +385,19 @@ class TradingBot:
             
             # If no position found, try to configure it
             self.exchange.set_margin_mode('isolated', symbol)
-            self.exchange.set_leverage(self.config.leverage, symbol)
-            logger.info(f"Configured {symbol}: {self.config.leverage}x isolated margin")
+            # Set leverage using Binance futures API format
+            symbol_raw = symbol.replace('/', '')  # Remove slash for Binance API
+            try:
+                leverage_result = self.exchange.fapiPrivate_post_leverage({
+                    'symbol': symbol_raw,
+                    'leverage': int(self.config.leverage)
+                })
+                logger.info(f"Configured {symbol}: {self.config.leverage}x isolated margin via direct API")
+            except Exception as leverage_error:
+                # Fallback to CCXT method
+                logger.warning(f"Direct API failed for {symbol}, trying CCXT method: {leverage_error}")
+                self.exchange.set_leverage(int(self.config.leverage), symbol)
+                logger.info(f"Configured {symbol}: {self.config.leverage}x isolated margin via CCXT")
             return True
             
         except Exception as e:
