@@ -199,6 +199,7 @@
                                         <th>Side</th>
                                         <th>Amount</th>
                                         <th>Entry Price</th>
+                                        <th>Leverage</th>
                                         <th>Current/Exit Price</th>
                                         <th>P&L</th>
                                         <th>P&L %</th>
@@ -436,7 +437,7 @@
                         if (totalPnl > 0) pnlElement.addClass('profit');
                         else if (totalPnl < 0) pnlElement.addClass('loss');
                         
-                        $('#openTrades').text(`${data.portfolio.open_trades} / 5`);
+                        $('#openTrades').text(`${data.portfolio.open_trades} / ${data.portfolio.max_trades || 2}`);
                     }
                 } catch (error) {
                     console.error('Error loading bot status:', error);
@@ -446,7 +447,11 @@
             async loadTrades() {
                 try {
                     const response = await fetch('/api/trades');
-                    const trades = await response.json();
+                    const data = await response.json();
+                    
+                    // Handle both old format (array) and new format (object with trades array)
+                    const trades = data.trades || data;
+                    const summary = data.summary;
                     
                     const tbody = $('#tradesTable tbody');
                     tbody.empty();
@@ -455,6 +460,25 @@
                         const row = this.createTradeRow(trade);
                         tbody.append(row);
                     });
+                    
+                    // Update total PnL and trade count from summary
+                    if (summary) {
+                        // Update total PnL display
+                        const totalPnl = summary.total_pnl || 0;
+                        const pnlElement = $('#totalPnl');
+                        pnlElement.text(`$${totalPnl.toFixed(2)}`);
+                        pnlElement.removeClass('profit loss');
+                        if (totalPnl > 0) pnlElement.addClass('profit');
+                        else if (totalPnl < 0) pnlElement.addClass('loss');
+                        
+                        // Update trade count display
+                        $('#openTrades').text(`${summary.open_trades} / ${summary.max_trades}`);
+                        
+                        // Update other summary info if available
+                        if (summary.total_unrealized_pnl !== undefined) {
+                            console.log(`Realized P&L: $${summary.total_realized_pnl.toFixed(2)}, Unrealized P&L: $${summary.total_unrealized_pnl.toFixed(2)}`);
+                        }
+                    }
                 } catch (error) {
                     console.error('Error loading trades:', error);
                 }
@@ -542,6 +566,7 @@
                         <td><span class="badge bg-${trade.side === 'buy' ? 'success' : 'danger'}">${trade.side.toUpperCase()}</span></td>
                         <td>${trade.amount.toFixed(6)}</td>
                         <td>$${trade.price.toFixed(4)}</td>
+                        <td><span class="badge bg-info">${trade.leverage}x</span></td>
                         <td>${priceDisplay}</td>
                         <td class="${pnlClass}">${pnlDisplay}</td>
                         <td class="${pnlClass}">${pnlPctDisplay}</td>

@@ -7,7 +7,7 @@ BINANCE_TESTNET_SECRET = "107d36fde411bbf834f5d86a9de3e7df2baf9476e00cfd38558b35
 
 # Trading Configuration
 INITIAL_BALANCE = 30.0
-MAX_TRADES = 5  # Increased from 2 to allow more concurrent trades
+MAX_TRADES = 2  # Maximum 2 trades: 1 long position + 1 hedge position
 LEVERAGE = 10.0
 TIMEFRAME = "5m"
 
@@ -16,7 +16,7 @@ INITIAL_TRADE_SIZE = 30.0  # Initial trade allocation per pair
 LONG_POSITION_SIZE = 6.0  # Size of initial long position (increased from 5.0)
 SHORT_POSITION_SIZE = 10.0  # Size of hedge short position
 HEDGE_TRIGGER_LOSS = -0.05  # -5% loss triggers hedge position
-ONE_TRADE_PER_PAIR = False  # Allow multiple trades per pair for testing
+ONE_TRADE_PER_PAIR = True  # Only allow one active trade pair at a time
 
 # Symbol Selection Configuration
 MAX_SYMBOLS = 100  # Maximum number of symbols to trade

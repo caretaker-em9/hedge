@@ -599,6 +599,9 @@ def get_trades():
     
     trades_data = []
     for trade in bot.trades:
+        # Get actual leverage from exchange for this trade
+        actual_leverage = bot.get_trade_leverage(trade)
+        
         trade_dict = {
             'id': trade.id,
             'symbol': trade.symbol,
@@ -615,6 +618,7 @@ def get_trades():
             'pnl_percentage': trade.pnl_percentage,
             'trade_type': getattr(trade, 'trade_type', 'normal'),
             'pair_id': getattr(trade, 'pair_id', None),
+            'leverage': actual_leverage,  # Actual leverage from exchange
             # Detailed reasons
             'entry_reason': getattr(trade, 'entry_reason', 'Standard entry'),
             'exit_reason': getattr(trade, 'exit_reason', None),
@@ -628,7 +632,7 @@ def get_trades():
                     trade_dict['current_price'] = current_price
                     price_diff = current_price - trade.price
                     current_pnl = price_diff * trade.amount
-                    current_pnl_percentage = (price_diff / trade.price) * 100 * bot.config.leverage
+                    current_pnl_percentage = (price_diff / trade.price) * 100 * actual_leverage
                     
                     trade_dict['current_pnl'] = current_pnl
                     trade_dict['current_pnl_percentage'] = current_pnl_percentage
@@ -664,7 +668,41 @@ def get_trades():
         
         trades_data.append(trade_dict)
     
-    return jsonify(trades_data)
+    # Calculate total PnL (realized + unrealized)
+    total_realized_pnl = sum(trade.pnl for trade in bot.trades if trade.status == 'closed')
+    total_unrealized_pnl = 0
+    total_open_trades = 0
+    
+    for trade in bot.trades:
+        if trade.status == 'open':
+            total_open_trades += 1
+            try:
+                current_price = bot._get_current_price(trade.symbol)
+                if current_price:
+                    price_diff = current_price - trade.price
+                    if trade.side == 'buy':
+                        unrealized_pnl = price_diff * trade.amount
+                    else:  # sell/short
+                        unrealized_pnl = -price_diff * trade.amount
+                    total_unrealized_pnl += unrealized_pnl
+            except Exception as e:
+                logger.error(f"Error calculating unrealized PnL for {trade.symbol}: {e}")
+    
+    total_pnl = total_realized_pnl + total_unrealized_pnl
+    
+    # Return trades data with summary
+    return jsonify({
+        'trades': trades_data,
+        'summary': {
+            'total_trades': len(bot.trades),
+            'open_trades': total_open_trades,
+            'closed_trades': len(bot.trades) - total_open_trades,
+            'total_realized_pnl': total_realized_pnl,
+            'total_unrealized_pnl': total_unrealized_pnl,
+            'total_pnl': total_pnl,
+            'max_trades': bot.config.max_trades
+        }
+    })
 
 @app.route('/api/chart/<path:symbol>')
 @login_required

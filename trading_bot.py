@@ -1235,19 +1235,56 @@ class TradingBot:
             'closed_trades': len(closed_trades),
             'total_trades': len(self.trades)
         }
+    
+    def get_position_leverage(self, symbol: str) -> Optional[float]:
+        """Get the actual leverage setting for a symbol from the exchange"""
+        try:
+            positions = self.exchange.fetch_positions([symbol])
+            for position in positions:
+                if position['symbol'] == symbol and float(position.get('contracts', 0)) != 0:
+                    leverage = position.get('leverage', None)
+                    if leverage:
+                        return float(leverage)
+            
+            # If no active position, get leverage from account info or symbol info
+            try:
+                # Try to get leverage from symbol info
+                markets = self.exchange.load_markets()
+                if symbol in markets:
+                    market_info = markets[symbol]
+                    # Some exchanges store leverage info in market info
+                    if 'leverage' in market_info.get('info', {}):
+                        return float(market_info['info']['leverage'])
+                        
+                # Fallback: get leverage settings from account info
+                symbol_raw = symbol.replace('/', '')  # Remove slash for Binance API
+                leverage_info = self.exchange.fapiPrivate_get_leveragebracket({'symbol': symbol_raw})
+                if leverage_info and len(leverage_info) > 0:
+                    initial_leverage = leverage_info[0].get('initialLeverage', None)
+                    if initial_leverage:
+                        return float(initial_leverage)
+                        
+            except Exception as fallback_error:
+                logger.debug(f"Fallback leverage lookup failed for {symbol}: {fallback_error}")
+                
+            # Final fallback: return configured leverage
+            return float(self.config.leverage)
+            
+        except Exception as e:
+            logger.error(f"Error getting leverage for {symbol}: {e}")
+            return float(self.config.leverage)  # Fallback to config value
 
-if __name__ == "__main__":
-    # Initialize bot configuration
-    config = BotConfig()
-    
-    # Create and start bot
-    bot = TradingBot(config)
-    bot.start()
-    
-    try:
-        # Keep the main thread alive
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        logger.info("Received interrupt signal")
-        bot.stop()
+    def get_trade_leverage(self, trade: Trade) -> float:
+        """Get the actual leverage used for a specific trade"""
+        try:
+            # First try to get from active position
+            leverage = self.get_position_leverage(trade.symbol)
+            if leverage:
+                return leverage
+                
+            # If trade is closed or no position, return configured leverage as fallback
+            return float(self.config.leverage)
+            
+        except Exception as e:
+            logger.error(f"Error getting leverage for trade {trade.id}: {e}")
+            return float(self.config.leverage)
