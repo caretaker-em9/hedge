@@ -592,22 +592,29 @@ class TradingBot:
         }
     
     def execute_trade(self, symbol: str, side: str, analysis: Dict):
-        """Execute a trade using hedging strategy"""
+        """Execute a trade using hedging strategy with strict trade limits"""
         try:
             # For hedging strategy, we only process 'buy' signals to start new hedge pairs
             if side != 'buy':
                 return
-            
-            # Check if we already have a hedge pair for this symbol
-            existing_pair = self.get_hedge_pair_by_symbol(symbol)
-            if existing_pair and existing_pair.status != 'closed':
-                logger.info(f"Hedge pair already exists for {symbol}, skipping")
+
+            # Check total active trades (should never exceed 2: 1 buy + 1 hedge)
+            active_trades = [t for t in self.trades if t.status == 'open']
+            if len(active_trades) >= 2:
+                logger.info(f"Maximum trades reached ({len(active_trades)}/2). Cannot open new position.")
                 return
-            
-            # Check if we can start a new hedge pair
+
+            # Check if we already have a hedge pair for this symbol (ONE_TRADE_PER_PAIR enforcement)
+            if self.config.one_trade_per_pair:
+                existing_pair = self.get_hedge_pair_by_symbol(symbol)
+                if existing_pair and existing_pair.status != 'closed':
+                    logger.info(f"Hedge pair already exists for {symbol}, skipping (ONE_TRADE_PER_PAIR)")
+                    return
+
+            # Check if we can start a new hedge pair (should only allow 1 pair total)
             active_pairs = [hp for hp in self.hedge_pairs if hp.status != 'closed']
-            if len(active_pairs) >= self.config.max_trades:
-                logger.info(f"Maximum hedge pairs ({self.config.max_trades}) already active")
+            if len(active_pairs) >= 1:  # Only 1 hedge pair allowed (1 buy + 1 hedge max)
+                logger.info(f"Maximum hedge pairs (1) already active. Current pairs: {len(active_pairs)}")
                 return
             
             # Create new hedge pair and execute initial long position
@@ -806,22 +813,36 @@ class TradingBot:
         return None
     
     def check_hedge_triggers(self):
-        """Check if any long positions need hedging"""
+        """Check if any long positions need hedging when loss >= -5%"""
         for hedge_pair in self.hedge_pairs:
             if hedge_pair.status == 'long_only' and hedge_pair.long_trade:
-                # Calculate current P&L of long position
+                # Calculate current P&L percentage of long position
                 current_price = self._get_current_price(hedge_pair.symbol)
                 if current_price:
-                    pnl_pct = (current_price - hedge_pair.long_trade.price) / hedge_pair.long_trade.price
+                    # Calculate loss percentage (negative value indicates loss)
+                    loss_pct = (current_price - hedge_pair.long_trade.price) / hedge_pair.long_trade.price
                     
-                    # Check if we need to hedge
-                    if pnl_pct <= hedge_pair.hedge_trigger:
-                        logger.info(f"Hedge trigger hit for {hedge_pair.symbol}: {pnl_pct:.2%} loss")
+                    # Trigger hedge when loss is >= -5% (i.e., loss_pct <= -0.05)
+                    hedge_trigger_threshold = -0.05  # -5%
+                    if loss_pct <= hedge_trigger_threshold:
+                        logger.info(f"🚨 HEDGE TRIGGER ACTIVATED for {hedge_pair.symbol}:")
+                        logger.info(f"   • Current loss: {loss_pct:.2%}")
+                        logger.info(f"   • Trigger threshold: {hedge_trigger_threshold:.1%}")
+                        logger.info(f"   • Entry price: ${hedge_pair.long_trade.price:.4f}")
+                        logger.info(f"   • Current price: ${current_price:.4f}")
                         self._execute_hedge(hedge_pair, current_price)
+                    else:
+                        # Log current status for monitoring
+                        if loss_pct < 0:  # Only log when in loss
+                            logger.debug(f"Monitoring {hedge_pair.symbol}: {loss_pct:.2%} loss (hedge at {hedge_trigger_threshold:.1%})")
     
     def _execute_hedge(self, hedge_pair: HedgePair, current_price: float):
         """Execute hedge (short) position"""
         try:
+            logger.info(f"🛡️ EXECUTING HEDGE for {hedge_pair.symbol}:")
+            logger.info(f"   • Hedge size: ${hedge_pair.short_size}")
+            logger.info(f"   • Current price: ${current_price:.4f}")
+            
             analysis = {'price': current_price, 'ewo': 0, 'rsi': 50}  # Dummy analysis for hedge
             
             short_trade = self._execute_position(
@@ -836,13 +857,25 @@ class TradingBot:
             if short_trade:
                 hedge_pair.short_trade = short_trade
                 hedge_pair.status = 'hedged'
-                logger.info(f"Executed hedge for {hedge_pair.symbol}: Short ${hedge_pair.short_size}")
+                logger.info(f"✅ HEDGE EXECUTED for {hedge_pair.symbol}: Short ${hedge_pair.short_size}")
+                
+                # Send Telegram notification for hedge execution
+                if self.telegram_enabled:
+                    try:
+                        hedge_dict = asdict(short_trade)
+                        hedge_dict['timestamp'] = short_trade.timestamp.timestamp()
+                        hedge_dict['hedge_reason'] = f"Hedge triggered at {current_price:.4f} due to -5% loss protection"
+                        self._run_async_telegram_task(send_trade_entry_notification(hedge_dict))
+                    except Exception as e:
+                        logger.error(f"Error sending Telegram hedge notification: {e}")
+            else:
+                logger.error(f"❌ HEDGE FAILED for {hedge_pair.symbol}")
         
         except Exception as e:
             logger.error(f"Error executing hedge for {hedge_pair.symbol}: {e}")
     
     def check_hedge_exits(self):
-        """Check if hedged positions should be closed"""
+        """Check if hedged positions should be closed when loss is covered by 1% profit"""
         for hedge_pair in self.hedge_pairs:
             if hedge_pair.status == 'hedged' and hedge_pair.long_trade and hedge_pair.short_trade:
                 current_price = self._get_current_price(hedge_pair.symbol)
@@ -850,65 +883,96 @@ class TradingBot:
                     # Calculate P&L for both positions
                     long_pnl = (current_price - hedge_pair.long_trade.price) * hedge_pair.long_trade.amount
                     short_pnl = (hedge_pair.short_trade.price - current_price) * hedge_pair.short_trade.amount
+                    total_pnl = long_pnl + short_pnl
                     
-                    # Check if hedge profit covers long loss (with minimum ratio)
-                    if long_pnl < 0 and short_pnl > 0:
-                        hedge_coverage = short_pnl / abs(long_pnl)
-                        if hedge_coverage >= self.config.min_hedge_profit_ratio:
-                            logger.info(f"Hedge coverage achieved for {hedge_pair.symbol}: {hedge_coverage:.2f}x")
-                            self._close_hedge_pair(hedge_pair, current_price)
+                    # Calculate total investment (total capital used)
+                    total_invested = (hedge_pair.long_trade.price * hedge_pair.long_trade.amount + 
+                                    hedge_pair.short_trade.price * hedge_pair.short_trade.amount)
+                    
+                    # Calculate ROI percentage
+                    total_roi_pct = total_pnl / total_invested if total_invested > 0 else 0
+                    
+                    # Exit condition: 1% profit (ROI >= 1%)
+                    exit_threshold = 0.01  # 1% profit
+                    if total_roi_pct >= exit_threshold:
+                        logger.info(f"🎯 HEDGE EXIT TRIGGERED for {hedge_pair.symbol}:")
+                        logger.info(f"   • Total ROI: {total_roi_pct:.2%} >= {exit_threshold:.1%}")
+                        logger.info(f"   • Long P&L: ${long_pnl:.2f}")
+                        logger.info(f"   • Short P&L: ${short_pnl:.2f}")
+                        logger.info(f"   • Total P&L: ${total_pnl:.2f}")
+                        logger.info(f"   • Loss covered with 1% profit achieved!")
+                        self._close_hedge_pair(hedge_pair, current_price, total_roi_pct)
+                    else:
+                        # Log current hedge status for monitoring
+                        logger.debug(f"Hedge monitoring {hedge_pair.symbol}: ROI {total_roi_pct:.2%} (exit at {exit_threshold:.1%})")
     
-    def _close_hedge_pair(self, hedge_pair: HedgePair, current_price: float):
-        """Close both positions in a hedge pair with detailed exit reasons"""
+    def _close_hedge_pair(self, hedge_pair: HedgePair, current_price: float, total_roi_pct: float):
+        """Close both positions in a hedge pair when 1% profit is achieved"""
         try:
             # Calculate final P&L for exit reasons
             long_pnl = (current_price - hedge_pair.long_trade.price) * hedge_pair.long_trade.amount if hedge_pair.long_trade else 0
             short_pnl = (hedge_pair.short_trade.price - current_price) * hedge_pair.short_trade.amount if hedge_pair.short_trade else 0
             total_pnl = long_pnl + short_pnl
-            coverage_ratio = short_pnl / abs(long_pnl) if long_pnl < 0 else 0
             
             # Generate detailed exit reasons
-            exit_reason = f"Hedge target achieved: Short profit (${short_pnl:.2f}) covers long loss (${long_pnl:.2f}) with {coverage_ratio:.2f}x coverage ratio. Risk management objective met."
+            exit_reason = f"Hedge pair closed: 1% profit achieved ({total_roi_pct:.2%}). Loss covered by hedge strategy. Long P&L: ${long_pnl:.2f}, Short P&L: ${short_pnl:.2f}, Total: ${total_pnl:.2f}"
+            
+            logger.info(f"🏁 CLOSING HEDGE PAIR for {hedge_pair.symbol}:")
+            logger.info(f"   • Reason: {exit_reason}")
             
             # Close long position
             if hedge_pair.long_trade and hedge_pair.long_trade.status == 'open':
-                self.exchange.create_market_order(
-                    hedge_pair.symbol, 'sell', hedge_pair.long_trade.amount,
-                    params={
-                        'leverage': self.config.leverage,
-                        'marginMode': 'isolated'
-                    }
-                )
-                hedge_pair.long_trade.status = 'closed'
-                hedge_pair.long_trade.exit_price = current_price
-                hedge_pair.long_trade.exit_timestamp = datetime.now()
-                hedge_pair.long_trade.exit_reason = f"Hedge pair closure: Long position closed at ${current_price:.2f}. Loss contained by hedging strategy."
-                hedge_pair.long_trade.pnl = long_pnl
-                hedge_pair.long_trade.pnl_percentage = (long_pnl / (hedge_pair.long_trade.price * hedge_pair.long_trade.amount)) * 100
+                try:
+                    close_order = self.exchange.create_market_order(
+                        hedge_pair.symbol, 'sell', hedge_pair.long_trade.amount,
+                        params={'reduceOnly': True}
+                    )
+                    logger.info(f"✅ Closed long position: {close_order['id']}")
+                    
+                    hedge_pair.long_trade.status = 'closed'
+                    hedge_pair.long_trade.exit_price = current_price
+                    hedge_pair.long_trade.exit_timestamp = datetime.now()
+                    hedge_pair.long_trade.exit_reason = f"Hedge pair closure: Long position closed at ${current_price:.2f}. Loss covered by hedge with 1% profit."
+                    hedge_pair.long_trade.pnl = long_pnl
+                    hedge_pair.long_trade.pnl_percentage = (long_pnl / (hedge_pair.long_trade.price * hedge_pair.long_trade.amount)) * 100
+                except Exception as e:
+                    logger.error(f"Failed to close long position for {hedge_pair.symbol}: {e}")
             
             # Close short position
             if hedge_pair.short_trade and hedge_pair.short_trade.status == 'open':
-                self.exchange.create_market_order(
-                    hedge_pair.symbol, 'buy', hedge_pair.short_trade.amount,
-                    params={
-                        'leverage': self.config.leverage,
-                        'marginMode': 'isolated'
-                    }
-                )
-                hedge_pair.short_trade.status = 'closed'
-                hedge_pair.short_trade.exit_price = current_price
-                hedge_pair.short_trade.exit_timestamp = datetime.now()
-                hedge_pair.short_trade.exit_reason = f"Hedge pair closure: Short hedge successful at ${current_price:.2f}. Target coverage achieved, risk mitigated."
-                hedge_pair.short_trade.pnl = short_pnl
-                hedge_pair.short_trade.pnl_percentage = (short_pnl / (hedge_pair.short_trade.price * hedge_pair.short_trade.amount)) * 100
+                try:
+                    close_order = self.exchange.create_market_order(
+                        hedge_pair.symbol, 'buy', hedge_pair.short_trade.amount,
+                        params={'reduceOnly': True}
+                    )
+                    logger.info(f"✅ Closed short position: {close_order['id']}")
+                    
+                    hedge_pair.short_trade.status = 'closed'
+                    hedge_pair.short_trade.exit_price = current_price
+                    hedge_pair.short_trade.exit_timestamp = datetime.now()
+                    hedge_pair.short_trade.exit_reason = f"Hedge pair closure: Short hedge closed at ${current_price:.2f}. 1% profit target achieved."
+                    hedge_pair.short_trade.pnl = short_pnl
+                    hedge_pair.short_trade.pnl_percentage = (short_pnl / (hedge_pair.short_trade.price * hedge_pair.short_trade.amount)) * 100
+                except Exception as e:
+                    logger.error(f"Failed to close short position for {hedge_pair.symbol}: {e}")
             
             hedge_pair.status = 'closed'
-            logger.info(f"Closed hedge pair for {hedge_pair.symbol}")
-            logger.info(f"Exit reason: {exit_reason}")
+            logger.info(f"🎉 HEDGE PAIR CLOSED for {hedge_pair.symbol} with 1% profit!")
             
-            # Send Telegram notifications for trade exits and hedge completion
+            # Send Telegram notifications for hedge completion
             if self.telegram_enabled:
                 try:
+                    # Send hedge completion notification
+                    hedge_summary = {
+                        'symbol': hedge_pair.symbol,
+                        'total_pnl': total_pnl,
+                        'roi_percentage': total_roi_pct * 100,
+                        'long_pnl': long_pnl,
+                        'short_pnl': short_pnl,
+                        'exit_reason': exit_reason
+                    }
+                    self._run_async_telegram_task(send_hedge_completion_notification(hedge_summary))
+                    
                     # Send individual exit notifications
                     if hedge_pair.long_trade:
                         long_dict = asdict(hedge_pair.long_trade)
@@ -923,20 +987,151 @@ class TradingBot:
                         if hedge_pair.short_trade.exit_timestamp:
                             short_dict['exit_timestamp'] = hedge_pair.short_trade.exit_timestamp.timestamp()
                         self._run_async_telegram_task(send_trade_exit_notification(short_dict))
-                    
-                    # Send hedge completion summary
-                    if hedge_pair.long_trade and hedge_pair.short_trade:
-                        self._run_async_telegram_task(send_hedge_completion_notification(
-                            asdict(hedge_pair.long_trade), 
-                            asdict(hedge_pair.short_trade), 
-                            total_pnl
-                        ))
+                        
                 except Exception as e:
-                    logger.error(f"Error sending Telegram exit notifications: {e}")
+                    logger.error(f"Error sending Telegram notifications: {e}")
             
         except Exception as e:
             logger.error(f"Error closing hedge pair for {hedge_pair.symbol}: {e}")
     
+    def _close_hedge_pair(self, hedge_pair: HedgePair, current_price: float, total_roi_pct: float):
+        """Close both positions in a hedge pair with detailed exit reasons"""
+        try:
+            # Calculate final P&L for exit reasons
+            long_pnl = (current_price - hedge_pair.long_trade.price) * hedge_pair.long_trade.amount if hedge_pair.long_trade else 0
+            short_pnl = (hedge_pair.short_trade.price - current_price) * hedge_pair.short_trade.amount if hedge_pair.short_trade else 0
+            total_pnl = long_pnl + short_pnl
+            
+            # Generate detailed exit reasons
+            exit_reason = f"Hedge pair closed: Total ROI {total_roi_pct:.2%} exceeded -5% threshold. Long P&L: ${long_pnl:.2f}, Short P&L: ${short_pnl:.2f}, Total: ${total_pnl:.2f}"
+            
+            # Close long position
+            if hedge_pair.long_trade and hedge_pair.long_trade.status == 'open':
+                try:
+                    close_order = self.exchange.create_market_order(
+                        hedge_pair.symbol, 'sell', hedge_pair.long_trade.amount,
+                        params={'reduceOnly': True}
+                    )
+                    logger.info(f"Closed long position: {close_order['id']}")
+                    
+                    hedge_pair.long_trade.status = 'closed'
+                    hedge_pair.long_trade.exit_price = current_price
+                    hedge_pair.long_trade.exit_timestamp = datetime.now()
+                    hedge_pair.long_trade.exit_reason = f"Hedge pair closure: Long position closed at ${current_price:.2f}. Total ROI {total_roi_pct:.2%}"
+                    hedge_pair.long_trade.pnl = long_pnl
+                    hedge_pair.long_trade.pnl_percentage = (long_pnl / (hedge_pair.long_trade.price * hedge_pair.long_trade.amount)) * 100
+                except Exception as e:
+                    logger.error(f"Failed to close long position for {hedge_pair.symbol}: {e}")
+            
+            # Close short position
+            if hedge_pair.short_trade and hedge_pair.short_trade.status == 'open':
+                try:
+                    close_order = self.exchange.create_market_order(
+                        hedge_pair.symbol, 'buy', hedge_pair.short_trade.amount,
+                        params={'reduceOnly': True}
+                    )
+                    logger.info(f"Closed short position: {close_order['id']}")
+                    
+                    hedge_pair.short_trade.status = 'closed'
+                    hedge_pair.short_trade.exit_price = current_price
+                    hedge_pair.short_trade.exit_timestamp = datetime.now()
+                    hedge_pair.short_trade.exit_reason = f"Hedge pair closure: Short hedge closed at ${current_price:.2f}. Total ROI {total_roi_pct:.2%}"
+                    hedge_pair.short_trade.pnl = short_pnl
+                    hedge_pair.short_trade.pnl_percentage = (short_pnl / (hedge_pair.short_trade.price * hedge_pair.short_trade.amount)) * 100
+                except Exception as e:
+                    logger.error(f"Failed to close short position for {hedge_pair.symbol}: {e}")
+            
+            hedge_pair.status = 'closed'
+            logger.info(f"Closed hedge pair for {hedge_pair.symbol}")
+            logger.info(f"Exit reason: {exit_reason}")
+            
+            # Send Telegram notifications for trade exits and hedge completion
+            if self.telegram_enabled:
+                try:
+                    # Send hedge completion notification
+                    hedge_summary = {
+                        'symbol': hedge_pair.symbol,
+                        'total_pnl': total_pnl,
+                        'roi_percentage': total_roi_pct * 100,
+                        'long_pnl': long_pnl,
+                        'short_pnl': short_pnl,
+                        'exit_reason': exit_reason
+                    }
+                    self._run_async_telegram_task(send_hedge_completion_notification(hedge_summary))
+                    
+                    # Send individual exit notifications
+                    if hedge_pair.long_trade:
+                        long_dict = asdict(hedge_pair.long_trade)
+                        long_dict['timestamp'] = hedge_pair.long_trade.timestamp.timestamp()
+                        if hedge_pair.long_trade.exit_timestamp:
+                            long_dict['exit_timestamp'] = hedge_pair.long_trade.exit_timestamp.timestamp()
+                        self._run_async_telegram_task(send_trade_exit_notification(long_dict))
+                    
+                    if hedge_pair.short_trade:
+                        short_dict = asdict(hedge_pair.short_trade)
+                        short_dict['timestamp'] = hedge_pair.short_trade.timestamp.timestamp()
+                        if hedge_pair.short_trade.exit_timestamp:
+                            short_dict['exit_timestamp'] = hedge_pair.short_trade.exit_timestamp.timestamp()
+                        self._run_async_telegram_task(send_trade_exit_notification(short_dict))
+                        
+                except Exception as e:
+                    logger.error(f"Error sending Telegram notifications: {e}")
+            
+        except Exception as e:
+            logger.error(f"Error closing hedge pair for {hedge_pair.symbol}: {e}")
+
+    def check_stop_loss(self):
+        """Check and execute stop loss for open positions"""
+        open_trades = [t for t in self.trades if t.status == 'open']
+        
+        for trade in open_trades:
+            try:
+                current_data = self.analyze_symbol(trade.symbol)
+                current_price = current_data['price']
+                
+                # Calculate current loss percentage
+                if trade.side == 'buy':
+                    loss_pct = (current_price - trade.price) / trade.price
+                else:  # sell/short
+                    loss_pct = (trade.price - current_price) / trade.price
+                
+                # Check if stop loss should trigger
+                if loss_pct <= self.config.stoploss:
+                    logger.info(f"Stop loss triggered for {trade.symbol}: {loss_pct:.2%} <= {self.config.stoploss:.2%}")
+                    
+                    # Execute actual closing order on exchange
+                    try:
+                        if trade.side == 'buy':
+                            close_order = self.exchange.create_market_order(
+                                trade.symbol, 'sell', trade.amount,
+                                params={'reduceOnly': True}
+                            )
+                        else:
+                            close_order = self.exchange.create_market_order(
+                                trade.symbol, 'buy', trade.amount,
+                                params={'reduceOnly': True}
+                            )
+                        
+                        logger.info(f"Stop loss order executed: {close_order['id']}")
+                        
+                        # Update trade status
+                        trade.status = 'closed'
+                        trade.exit_price = current_price
+                        trade.exit_timestamp = datetime.now()
+                        trade.exit_signal = f"Stop Loss ({loss_pct:.1%})"
+                        
+                        price_diff = trade.exit_price - trade.price if trade.side == 'buy' else trade.price - trade.exit_price
+                        trade.pnl = price_diff * trade.amount
+                        trade.pnl_percentage = (price_diff / trade.price) * 100 * self.get_trade_leverage(trade)
+                        
+                        logger.info(f"Stop loss completed: {trade.symbol} P&L: ${trade.pnl:.2f}")
+                        
+                    except Exception as order_error:
+                        logger.error(f"Failed to execute stop loss order for {trade.symbol}: {order_error}")
+                    
+            except Exception as e:
+                logger.error(f"Error checking stop loss for {trade.symbol}: {e}")
+
     def _get_current_price(self, symbol: str) -> Optional[float]:
         """Get current price for a symbol"""
         try:
@@ -978,9 +1173,9 @@ class TradingBot:
                 logger.error(f"Error checking stop loss for {trade.symbol}: {e}")
     
     def check_roi_exit(self):
-        """Check and execute ROI exits for open non-hedge positions"""
-        # Only check ROI for trades that are not part of hedge pairs
-        open_trades = [t for t in self.trades if t.status == 'open' and t.trade_type == 'normal']
+        """Check and execute ROI exits for open positions"""
+        # Check ROI for all open trades
+        open_trades = [t for t in self.trades if t.status == 'open']
         
         for trade in open_trades:
             try:
@@ -988,7 +1183,10 @@ class TradingBot:
                 current_price = current_data['price']
                 
                 # Calculate current profit percentage
-                profit_pct = (current_price - trade.price) / trade.price
+                if trade.side == 'buy':
+                    profit_pct = (current_price - trade.price) / trade.price
+                else:  # sell/short
+                    profit_pct = (trade.price - current_price) / trade.price
                 
                 # Calculate time since entry (in minutes)
                 time_diff = (datetime.now() - trade.timestamp).total_seconds() / 60
@@ -997,19 +1195,52 @@ class TradingBot:
                 roi_threshold = self._get_roi_threshold(time_diff)
                 
                 if profit_pct >= roi_threshold:
-                    # Execute ROI exit
-                    trade.status = 'closed'
-                    trade.exit_price = current_price
-                    trade.exit_timestamp = datetime.now()
-                    trade.exit_signal = f"ROI ({profit_pct:.1%} >= {roi_threshold:.1%})"
+                    logger.info(f"ROI exit triggered for {trade.symbol}: {profit_pct:.1%} >= {roi_threshold:.1%}")
                     
-                    price_diff = trade.exit_price - trade.price
-                    trade.pnl = price_diff * trade.amount
-                    trade.pnl_percentage = (price_diff / trade.price) * 100 * self.config.leverage
+                    # Execute actual closing order on exchange
+                    try:
+                        if trade.side == 'buy':
+                            # Close long position with market sell
+                            close_order = self.exchange.create_market_order(
+                                trade.symbol, 'sell', trade.amount,
+                                params={'reduceOnly': True}
+                            )
+                        else:
+                            # Close short position with market buy
+                            close_order = self.exchange.create_market_order(
+                                trade.symbol, 'buy', trade.amount,
+                                params={'reduceOnly': True}
+                            )
+                        
+                        logger.info(f"ROI exit order executed: {close_order['id']}")
+                        
+                        # Update trade status
+                        trade.status = 'closed'
+                        trade.exit_price = current_price
+                        trade.exit_timestamp = datetime.now()
+                        trade.exit_signal = f"ROI ({profit_pct:.1%} >= {roi_threshold:.1%})"
+                        
+                        price_diff = trade.exit_price - trade.price if trade.side == 'buy' else trade.price - trade.exit_price
+                        trade.pnl = price_diff * trade.amount
+                        trade.pnl_percentage = (price_diff / trade.price) * 100 * self.get_trade_leverage(trade)
+                        
+                        logger.info(f"ROI exit completed: {trade.symbol} P&L: ${trade.pnl:.2f}")
+                        
+                        # Send Telegram notification
+                        if self.telegram_enabled:
+                            try:
+                                trade_dict = asdict(trade)
+                                trade_dict['timestamp'] = trade.timestamp.timestamp()
+                                trade_dict['exit_timestamp'] = trade.exit_timestamp.timestamp()
+                                self._run_async_telegram_task(send_trade_exit_notification(trade_dict))
+                            except Exception as e:
+                                logger.error(f"Error sending ROI exit notification: {e}")
+                        
+                    except Exception as order_error:
+                        logger.error(f"Failed to execute ROI exit order for {trade.symbol}: {order_error}")
                     
-                    self.balance += trade.pnl
-                    
-                    logger.info(f"ROI exit triggered: {trade.symbol} at {current_price:.2f} ({profit_pct:.1%})")
+            except Exception as e:
+                logger.error(f"Error checking ROI for {trade.symbol}: {e}")
                     
             except Exception as e:
                 logger.error(f"Error checking ROI for {trade.symbol}: {e}")
@@ -1032,17 +1263,21 @@ class TradingBot:
         return roi_threshold
     
     def check_trailing_stop(self):
-        """Check and execute trailing stop for open non-hedge positions"""
+        """Check and execute trailing stop for open positions"""
         if not self.config.trailing_stop:
             return
             
-        # Only check trailing stop for trades that are not part of hedge pairs
-        open_trades = [t for t in self.trades if t.status == 'open' and t.trade_type == 'normal']
+        # Check trailing stop for all open trades
+        open_trades = [t for t in self.trades if t.status == 'open']
         
         for trade in open_trades:
             try:
                 current_data = self.analyze_symbol(trade.symbol)
                 current_price = current_data['price']
+                
+                # Only apply trailing stop to long positions
+                if trade.side != 'buy':
+                    continue
                 
                 # Initialize max_price if not set
                 if trade.max_price is None:
@@ -1056,22 +1291,48 @@ class TradingBot:
                     if trade.max_price > trade.price * (1 + self.config.trailing_stop_positive_offset):
                         # Only activate trailing stop when profit exceeds offset
                         trade.trailing_stop_price = trade.max_price * (1 - self.config.trailing_stop_positive)
+                        logger.debug(f"Updated trailing stop for {trade.symbol}: ${trade.trailing_stop_price:.4f}")
                 
                 # Check if trailing stop should trigger
                 if trade.trailing_stop_price and current_price <= trade.trailing_stop_price:
-                    # Execute trailing stop
-                    trade.status = 'closed'
-                    trade.exit_price = current_price
-                    trade.exit_timestamp = datetime.now()
-                    trade.exit_signal = f"Trailing Stop (Max: ${trade.max_price:.2f})"
+                    logger.info(f"Trailing stop triggered for {trade.symbol}: ${current_price:.4f} <= ${trade.trailing_stop_price:.4f}")
                     
-                    price_diff = trade.exit_price - trade.price
-                    trade.pnl = price_diff * trade.amount
-                    trade.pnl_percentage = (price_diff / trade.price) * 100 * self.config.leverage
+                    # Execute actual closing order on exchange
+                    try:
+                        close_order = self.exchange.create_market_order(
+                            trade.symbol, 'sell', trade.amount,
+                            params={'reduceOnly': True}
+                        )
+                        
+                        logger.info(f"Trailing stop order executed: {close_order['id']}")
+                        
+                        # Update trade status
+                        trade.status = 'closed'
+                        trade.exit_price = current_price
+                        trade.exit_timestamp = datetime.now()
+                        trade.exit_signal = f"Trailing Stop (Max: ${trade.max_price:.2f})"
+                        
+                        price_diff = trade.exit_price - trade.price
+                        trade.pnl = price_diff * trade.amount
+                        trade.pnl_percentage = (price_diff / trade.price) * 100 * self.get_trade_leverage(trade)
+                        
+                        logger.info(f"Trailing stop completed: {trade.symbol} P&L: ${trade.pnl:.2f}")
+                        
+                        # Send Telegram notification
+                        if self.telegram_enabled:
+                            try:
+                                trade_dict = asdict(trade)
+                                trade_dict['timestamp'] = trade.timestamp.timestamp()
+                                trade_dict['exit_timestamp'] = trade.exit_timestamp.timestamp()
+                                self._run_async_telegram_task(send_trade_exit_notification(trade_dict))
+                            except Exception as e:
+                                logger.error(f"Error sending trailing stop exit notification: {e}")
+                        
+                    except Exception as order_error:
+                        logger.error(f"Failed to execute trailing stop order for {trade.symbol}: {order_error}")
                     
-                    self.balance += trade.pnl
-                    
-                    logger.info(f"Trailing stop triggered: {trade.symbol} at {current_price:.2f} (Max was: {trade.max_price:.2f})")
+            except Exception as e:
+                logger.error(f"Error checking trailing stop for {trade.symbol}: {e}")
                     
             except Exception as e:
                 logger.error(f"Error checking trailing stop for {trade.symbol}: {e}")

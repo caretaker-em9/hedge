@@ -90,7 +90,7 @@ MIN_HEDGE_PROFIT_RATIO = 1.0  # Hedge profit should at least cover long loss
 
 # Web Interface
 WEB_HOST = "0.0.0.0"
-WEB_PORT = 5000
+WEB_PORT = 5020
 SECRET_KEY = "trading_bot_secret_key_change_this_in_production"
 
 # Authentication

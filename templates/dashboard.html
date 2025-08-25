@@ -208,6 +208,7 @@
                                         <th>Entry Reason</th>
                                         <th>Exit Reason</th>
                                         <th>Market Conditions</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -559,6 +560,18 @@
                 const exitReason = trade.exit_reason ? this.formatTradeReason(trade.exit_reason) : '-';
                 const marketConditions = trade.market_conditions ? this.formatMarketConditions(trade.market_conditions) : '-';
 
+                // Create action buttons for open trades
+                let actionButtons = '-';
+                if (trade.status === 'open') {
+                    actionButtons = `
+                        <button class="btn btn-sm btn-danger" 
+                                onclick="closeTrade('${trade.id}', '${trade.symbol}', '${trade.side}')"
+                                title="Close this position">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    `;
+                }
+
                 return `
                     <tr class="trade-row ${trade.status === 'open' ? 'table-info' : ''}">
                         <td>${entryTime}</td>
@@ -575,6 +588,7 @@
                         <td class="reason-cell"><small class="text-info">${entryReason}</small></td>
                         <td class="reason-cell"><small class="text-warning">${exitReason}</small></td>
                         <td class="reason-cell"><small class="text-muted">${marketConditions}</small></td>
+                        <td>${actionButtons}</td>
                     </tr>
                 `;
             }
@@ -695,6 +709,35 @@
                 }
             }
 
+            async closeTrade(symbol) {
+                if (!confirm(`Are you sure you want to close the trade for ${symbol}?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/close_trade', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ symbol: symbol })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showAlert(data.message, 'success');
+                        // Refresh trades data
+                        await this.loadTrades();
+                    } else {
+                        this.showAlert(data.error || 'Failed to close trade', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Error closing trade:', error);
+                    this.showAlert('Error closing trade: ' + error.message, 'danger');
+                }
+            }
+
             startAutoRefresh() {
                 this.refreshInterval = setInterval(() => {
                     this.refreshData();
@@ -728,9 +771,16 @@
             }
         }
 
+        // Global function for closing trades (called by buttons)
+        window.closeTrade = function(symbol) {
+            if (window.dashboardInstance) {
+                window.dashboardInstance.closeTrade(symbol);
+            }
+        };
+
         // Initialize dashboard when page loads
         $(document).ready(() => {
-            new TradingDashboard();
+            window.dashboardInstance = new TradingDashboard();
         });
     </script>
 </body>

@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-08-23T09:41:12.022097",
+  "timestamp": "2025-08-25T11:11:19.159518",
   "initial": {
-    "orders": 0,
-    "positions": 5,
-    "pnl": -1.7815354499999998
+    "orders": 1,
+    "positions": 4,
+    "pnl": 4.8238039399999995
   },
   "final": {
     "orders": 0,

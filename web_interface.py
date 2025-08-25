@@ -704,6 +704,101 @@ def get_trades():
         }
     })
 
+@app.route('/api/close_trade', methods=['POST'])
+@login_required
+def close_trade():
+    """Close a specific trade by symbol"""
+    if not bot:
+        return jsonify({'error': 'Bot not initialized', 'success': False})
+    
+    try:
+        data = request.get_json()
+        if not data or 'symbol' not in data:
+            return jsonify({'error': 'Symbol is required', 'success': False})
+        
+        symbol = data['symbol']
+        logger.info(f"Attempting to close trade for symbol: {symbol}")
+        
+        # Find open trades for this symbol
+        open_trades = [trade for trade in bot.trades if trade.symbol == symbol and trade.status == 'open']
+        
+        if not open_trades:
+            return jsonify({'error': f'No open trades found for {symbol}', 'success': False})
+        
+        # Close all open trades for this symbol
+        closed_count = 0
+        errors = []
+        
+        for trade in open_trades:
+            try:
+                # Determine close side (opposite of open side)
+                close_side = 'sell' if trade.side == 'buy' else 'buy'
+                
+                # Get current market price
+                current_price = bot._get_current_price(symbol)
+                if not current_price:
+                    errors.append(f"Could not get current price for {symbol}")
+                    continue
+                
+                # Create market order to close position
+                order_result = bot.exchange.create_market_order(
+                    symbol=symbol,
+                    side=close_side,
+                    amount=trade.amount,
+                    params={'reduceOnly': True}  # Ensure we're closing position, not opening new one
+                )
+                
+                if order_result:
+                    # Update trade status
+                    trade.status = 'closed'
+                    trade.close_price = current_price
+                    trade.close_time = datetime.now()
+                    
+                    # Calculate realized PnL
+                    if trade.side == 'buy':
+                        trade.realized_pnl = (current_price - trade.price) * trade.amount
+                    else:
+                        trade.realized_pnl = (trade.price - current_price) * trade.amount
+                    
+                    closed_count += 1
+                    logger.info(f"Successfully closed {trade.side} trade for {symbol}, PnL: ${trade.realized_pnl:.2f}")
+                    
+                    # Send Telegram notification if enabled
+                    if hasattr(bot.config, 'TELEGRAM_ENABLED') and bot.config.TELEGRAM_ENABLED:
+                        bot._send_telegram_message(
+                            f"🔒 Trade Closed (Manual)\n"
+                            f"Symbol: {symbol}\n"
+                            f"Side: {trade.side.upper()}\n"
+                            f"Amount: {trade.amount}\n"
+                            f"Entry: ${trade.price:.4f}\n"
+                            f"Exit: ${current_price:.4f}\n"
+                            f"PnL: ${trade.realized_pnl:.2f}\n"
+                            f"Time: {trade.close_time.strftime('%H:%M:%S')}"
+                        )
+                else:
+                    errors.append(f"Failed to create close order for {symbol}")
+                    
+            except Exception as e:
+                error_msg = f"Error closing trade for {symbol}: {str(e)}"
+                errors.append(error_msg)
+                logger.error(error_msg)
+        
+        if closed_count > 0:
+            message = f"Successfully closed {closed_count} trade(s) for {symbol}"
+            if errors:
+                message += f". Errors: {'; '.join(errors)}"
+            return jsonify({'success': True, 'message': message, 'closed_count': closed_count})
+        else:
+            error_message = f"Failed to close any trades for {symbol}"
+            if errors:
+                error_message += f". Errors: {'; '.join(errors)}"
+            return jsonify({'error': error_message, 'success': False})
+            
+    except Exception as e:
+        error_msg = f"Error processing close trade request: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({'error': error_msg, 'success': False})
+
 @app.route('/api/chart/<path:symbol>')
 @login_required
 def get_chart(symbol):
@@ -891,5 +986,7 @@ if __name__ == '__main__':
     config = BotConfig()
     bot = TradingBot(config)
     
-    print("Starting web interface on http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Get port from config
+    web_port = getattr(config, 'WEB_PORT', 5000)
+    print(f"Starting web interface on http://localhost:{web_port}")
+    app.run(debug=True, host='0.0.0.0', port=web_port)
